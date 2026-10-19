@@ -10,7 +10,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
-DEVELOPER_NAME = "soloh_kim"  # FIXED - was placeholder
+DEVELOPER_NAME = "soloh_kim"
 COPYRIGHT_YEAR = "2026"
 
 def get_db():
@@ -95,6 +95,16 @@ def register():
         id_number = request.form['id_number'].strip()
         phone = request.form['phone'].strip()
         password = request.form['password']
+        # Server-side strict validation - FIXED INDENTATION
+        if not full_name.replace(' ','').isalpha():
+            flash("Full Name must contain letters only", "danger")
+            return render_template('register.html')
+        if not id_number.isdigit() or len(id_number) not in (7,8):
+            flash("ID Number must be 7 or 8 digits", "danger")
+            return render_template('register.html')
+        if not (phone.isdigit() and len(phone)==10 and phone.startswith('07')):
+            flash("Phone must be 10 digits starting with 07 (e.g. 0712345678)", "danger")
+            return render_template('register.html')
         existing = db.execute("SELECT id FROM users WHERE LOWER(email)=?", (email,)).fetchone()
         if existing:
             flash("Email already exists! This email is already registered. Please login or use Forgot Password.", "danger")
