@@ -10,7 +10,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
-DEVELOPER_NAME = "soloh_kim" # <-- developer
+DEVELOPER_NAME = "soloh_kim"  # FIXED - was placeholder
 COPYRIGHT_YEAR = "2026"
 
 def get_db():
@@ -49,7 +49,7 @@ init_db()
 
 @app.context_processor
 def inject_copyright():
-    return dict(developer_name=soloh_kim, copyright_year=2026)
+    return dict(developer_name=DEVELOPER_NAME, copyright_year=COPYRIGHT_YEAR)
 
 @app.teardown_appcontext
 def close_connection(exception):
@@ -72,7 +72,7 @@ def check_session_timeout():
                 if now - last_time > timedelta(minutes=15):
                     session.clear()
                     flash("Session expired due to inactivity (15 min). Please login again.", "warning")
-                    return render_template('register.html')
+                    return redirect(url_for('login'))
             except: pass
         session['last_active'] = now.isoformat()
 
@@ -90,19 +90,15 @@ def home(): return redirect(url_for('login'))
 def register():
     if request.method == 'POST':
         db = get_db()
-        email = request.form['email'].strip().lower()  # ALWAYS lower
+        email = request.form['email'].strip().lower()
         full_name = request.form['full_name'].strip()
         id_number = request.form['id_number'].strip()
         phone = request.form['phone'].strip()
         password = request.form['password']
-
-        # 1. CHECK FIRST - case-insensitive
         existing = db.execute("SELECT id FROM users WHERE LOWER(email)=?", (email,)).fetchone()
         if existing:
             flash("Email already exists! This email is already registered. Please login or use Forgot Password.", "danger")
             return render_template('register.html')
-
-        # 2. Try insert
         try:
             db.execute("INSERT INTO users (full_name, id_number, email, phone, password) VALUES (?,?,?,?,?)",
                        (full_name, id_number, email, phone, generate_password_hash(password)))
@@ -110,13 +106,11 @@ def register():
             flash("Registration successful! Please login.", "success")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            # This will still catch if UNIQUE fails
             flash("Email already exists! Please use a different email or login.", "danger")
             return render_template('register.html')
         except Exception as e:
             flash(f"Error: {str(e)}", "danger")
             return render_template('register.html')
-            
     return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
@@ -208,15 +202,14 @@ def admin_dashboard():
     if session.get('role')!='admin': 
         return redirect(url_for('login'))
     db=get_db()
-    # Use LEFT JOIN so requests show even if user was deleted
     all_reqs=db.execute("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id ORDER BY r.created_at DESC").fetchall()
     total=db.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
     pending=db.execute("SELECT COUNT(*) FROM requests WHERE status='Pending'").fetchone()[0]
     inprog=db.execute("SELECT COUNT(*) FROM requests WHERE status='In Progress'").fetchone()[0]
     resolved=db.execute("SELECT COUNT(*) FROM requests WHERE status='Resolved'").fetchone()[0]
     by_category=db.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category").fetchall()
-    print(f"DEBUG ADMIN: Total={total}, Found={len(all_reqs)}") # will show in Render logs
     return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category)
+
 @app.route('/admin/update/<int:req_id>', methods=['POST'])
 def update_request(req_id):
     if session.get('role')!='admin': return redirect(url_for('login'))
