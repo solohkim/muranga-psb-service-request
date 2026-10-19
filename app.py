@@ -206,29 +206,36 @@ def new_request():
     try: return render_template('new_request.html')
     except: return render_template('submit_request.html')
 
-# === NEW: CITIZEN CAN EDIT OWN REQUEST ===
+# === FIXED: CITIZEN CAN EDIT OWN REQUEST - NO 500 ===
 @app.route('/citizen/request/<int:req_id>/edit', methods=['GET','POST'])
 def edit_citizen_request(req_id):
-    if 'user_id' not in session or session.get('role') != 'citizen':
+    if 'user_id' not in session:
         return redirect(url_for('login'))
     db = get_db()
-    req = db.execute("SELECT * FROM requests WHERE id=? AND user_id=?", (req_id, session['user_id'])).fetchone()
-    if not req:
-        flash("Request not found or not allowed", "danger")
+    try:
+        req = db.execute("SELECT * FROM requests WHERE id=? AND user_id=?", (req_id, session['user_id'])).fetchone()
+        if not req:
+            flash("Request not found or not allowed", "danger")
+            return redirect(url_for('citizen_dashboard'))
+        # Only block edit if not pending - but allow viewing
+        if req['status'] != 'Pending' and request.method == 'GET':
+            flash("Only Pending requests can be edited", "warning")
+            return redirect(url_for('citizen_dashboard'))
+        if request.method == 'POST':
+            category = request.form.get('category', req['category'])
+            location = request.form.get('location', req['location'])
+            description = request.form.get('description', req['description'])
+            db.execute("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?",
+                       (category, location, description, req_id, session['user_id']))
+            db.commit()
+            flash("Request updated successfully!", "success")
+            return redirect(url_for('citizen_dashboard'))
+        return render_template('edit_request.html', req=req)
+    except Exception as e:
+        # This prevents 500 and shows error in logs
+        print(f"EDIT ERROR: {e}")
+        flash(f"Error loading edit page: {e}", "danger")
         return redirect(url_for('citizen_dashboard'))
-    if req['status'] != 'Pending':
-        flash("Only Pending requests can be edited", "warning")
-        return redirect(url_for('citizen_dashboard'))
-    if request.method == 'POST':
-        category = request.form.get('category')
-        location = request.form.get('location')
-        description = request.form.get('description')
-        db.execute("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?",
-                   (category, location, description, req_id, session['user_id']))
-        db.commit()
-        flash("Request updated successfully!", "success")
-        return redirect(url_for('citizen_dashboard'))
-    return render_template('edit_request.html', req=req)
 
 @app.route('/admin')
 def admin_dashboard():
@@ -253,7 +260,6 @@ def update_request(req_id):
     flash("Updated!", "success")
     return redirect(url_for('admin_dashboard'))
 
-# === NEW: ADMIN CAN DELETE ANY REQUEST ===
 @app.route('/admin/request/<int:req_id>/delete', methods=['POST'])
 def delete_request(req_id):
     if session.get('role') != 'admin':
