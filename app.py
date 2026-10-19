@@ -10,6 +10,8 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
+DEVELOPER_NAME = "YOUR FULL NAME HERE - Replace this" # <-- CHANGE THIS!
+COPYRIGHT_YEAR = "2026"
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -43,21 +45,22 @@ def init_db():
                        ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
         db.commit()
 
-# IMPORTANT: This runs on Render with gunicorn!
 init_db()
+
+@app.context_processor
+def inject_copyright():
+    return dict(developer_name=DEVELOPER_NAME, copyright_year=COPYRIGHT_YEAR)
 
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
-    if db is not None: 
-        db.close()
+    if db is not None: db.close()
 
-def allowed_file(f): 
-    return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
+def allowed_file(f): return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
 
 @app.before_request
 def check_session_timeout():
-    if request.endpoint in ('login', 'register', 'static', 'home', None):
+    if request.endpoint in ('login', 'register', 'static', 'home', 'forgot_password', None):
         return
     if 'user_id' in session:
         session.permanent = True
@@ -87,25 +90,58 @@ def home(): return redirect(url_for('login'))
 def register():
     if request.method == 'POST':
         db = get_db()
+        email = request.form['email'].strip().lower()
+        # Check if already exists first
+        existing = db.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+        if existing:
+            flash("This email is already registered. Please login or click Forgot Password.", "warning")
+            return redirect(url_for('login'))
         try:
             db.execute("INSERT INTO users (full_name, id_number, email, phone, password) VALUES (?,?,?,?,?)",
-                       (request.form['full_name'], request.form['id_number'], request.form['email'], request.form['phone'], generate_password_hash(request.form['password'])))
+                       (request.form['full_name'], request.form['id_number'], email, request.form['phone'], generate_password_hash(request.form['password'])))
             db.commit()
             flash("Registration successful! Please login.", "success")
             return redirect(url_for('login'))
-        except: flash("Email already exists", "danger")
+        except sqlite3.IntegrityError:
+            flash("This email is already registered. Please login or use Forgot Password.", "warning")
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash(f"Registration error: {str(e)}", "danger")
     return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        user = get_db().execute("SELECT * FROM users WHERE email=?", (request.form['email'],)).fetchone()
+        user = get_db().execute("SELECT * FROM users WHERE email=?", (request.form['email'].strip().lower(),)).fetchone()
         if user and check_password_hash(user['password'], request.form['password']):
             session['user_id']=user['id']; session['role']=user['role']; session['full_name']=user['full_name']
             session.permanent=True; session['last_active']=datetime.now().isoformat()
             return redirect(url_for('admin_dashboard' if user['role']=='admin' else 'citizen_dashboard'))
         flash("Invalid credentials", "danger")
     return render_template('login.html')
+
+@app.route('/forgot-password', methods=['GET','POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email'].strip().lower()
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        if new_password != confirm_password:
+            flash("Passwords do not match!", "danger")
+            return render_template('forgot_password.html')
+        if len(new_password) < 6:
+            flash("Password must be at least 6 characters", "danger")
+            return render_template('forgot_password.html')
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+        if not user:
+            flash("No account found with that email", "danger")
+            return render_template('forgot_password.html')
+        db.execute("UPDATE users SET password=? WHERE email=?", (generate_password_hash(new_password), email))
+        db.commit()
+        flash("Password reset successful! Please login with new password.", "success")
+        return redirect(url_for('login'))
+    return render_template('forgot_password.html')
 
 @app.route('/logout')
 def logout(): session.clear(); return redirect(url_for('login'))

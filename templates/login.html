@@ -43,6 +43,7 @@ body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgb
 <small class="text-muted">Secure access to your service requests</small>
 </div>
 {% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="alert alert-{{cat}} py-2 small">{{msg}}</div>{% endfor %}{% endwith %}
+<div class="text-end mb-2" style="font-size:13px;"><a href="/forgot-password">Forgot Password?</a></div>
 <form method="POST">
 <label class="small fw-semibold mb-1">Email Address</label>
 <div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" placeholder="citizen@example.com" required></div>
@@ -56,4 +57,7 @@ body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgb
 </div>
 </div>
 </div></div>
+<div style="text-align:center; padding:12px; margin-top:30px; background:#0b4d2e; color:white; font-size:12px;">
+© {{ copyright_year }} Murang'a County PSB eService Portal<br>Developed by soloh_kim | All Rights Reserved
+</div>
 </body></html>
