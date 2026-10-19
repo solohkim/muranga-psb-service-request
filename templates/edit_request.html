@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+<h3>Edit Service Request #{{ req['id'] }}</h3>
+<form method="POST">
+  <label>Category</label>
+  <input name="category" value="{{ req['category'] }}" class="form-control" required>
+  <label class="mt-2">Location / Ward</label>
+  <input name="location" value="{{ req['location'] }}" class="form-control" required>
+  <label class="mt-2">Description</label>
+  <textarea name="description" class="form-control" rows="4" required>{{ req['description'] }}</textarea>
+  <button class="btn btn-primary mt-3">Save Changes</button>
+  <a href="/dashboard" class="btn btn-secondary mt-3">Cancel</a>
+</form>
+</div>
+{% endblock %}

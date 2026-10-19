@@ -95,7 +95,6 @@ def register():
         id_number = request.form['id_number'].strip()
         phone = request.form['phone'].strip()
         password = request.form['password']
-        # Server-side strict validation - FIXED INDENTATION
         if not full_name.replace(' ','').isalpha():
             flash("Full Name must contain letters only", "danger")
             return render_template('register.html')
@@ -207,6 +206,30 @@ def new_request():
     try: return render_template('new_request.html')
     except: return render_template('submit_request.html')
 
+# === NEW: CITIZEN CAN EDIT OWN REQUEST ===
+@app.route('/citizen/request/<int:req_id>/edit', methods=['GET','POST'])
+def edit_citizen_request(req_id):
+    if 'user_id' not in session or session.get('role') != 'citizen':
+        return redirect(url_for('login'))
+    db = get_db()
+    req = db.execute("SELECT * FROM requests WHERE id=? AND user_id=?", (req_id, session['user_id'])).fetchone()
+    if not req:
+        flash("Request not found or not allowed", "danger")
+        return redirect(url_for('citizen_dashboard'))
+    if req['status'] != 'Pending':
+        flash("Only Pending requests can be edited", "warning")
+        return redirect(url_for('citizen_dashboard'))
+    if request.method == 'POST':
+        category = request.form.get('category')
+        location = request.form.get('location')
+        description = request.form.get('description')
+        db.execute("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?",
+                   (category, location, description, req_id, session['user_id']))
+        db.commit()
+        flash("Request updated successfully!", "success")
+        return redirect(url_for('citizen_dashboard'))
+    return render_template('edit_request.html', req=req)
+
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role')!='admin': 
@@ -228,6 +251,17 @@ def update_request(req_id):
                (request.form['status'], request.form['admin_remarks'], req_id))
     db.commit()
     flash("Updated!", "success")
+    return redirect(url_for('admin_dashboard'))
+
+# === NEW: ADMIN CAN DELETE ANY REQUEST ===
+@app.route('/admin/request/<int:req_id>/delete', methods=['POST'])
+def delete_request(req_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    db = get_db()
+    db.execute("DELETE FROM requests WHERE id=?", (req_id,))
+    db.commit()
+    flash(f"Request #{req_id} deleted by admin", "success")
     return redirect(url_for('admin_dashboard'))
 
 if __name__=='__main__':
