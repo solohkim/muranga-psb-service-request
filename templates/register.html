@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-<title>Murang'a County - Citizen Registration</title>
+<title>Register - Murang'a PSB</title>
 <style>
 body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.88) 0%, rgba(0,0,0,0.55) 55%), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000') center/cover fixed;font-family:'Segoe UI',system-ui}
 .left{color:#fff;padding:50px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
@@ -9,80 +9,86 @@ body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.
 .gold{color:#FFD54F}
 .badge-m{border:1px solid #FFD54F;color:#FFD54F;padding:6px 14px;border-radius:100px;font-size:.70rem;letter-spacing:1.5px;background:rgba(255,213,79,.1)}
 .card-reg{background:#fff;border-radius:22px;box-shadow:0 25px 60px rgba(0,0,0,.45);position:relative;margin-top:35px}
-.avatar-box{width:96px;height:96px;border-radius:50%;margin:-48px auto 14px;background:#fff;border:4px solid #0a5c26;box-shadow:0 8px 20px rgba(0,0,0,.25);overflow:hidden}
-.avatar-box img{width:100%;height:100%;object-fit:cover}
+.avatar-box{width:96px;height:96px;border-radius:50%;margin:-48px auto 14px;background:#fff;border:4px solid #0a5c26;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;font-size:2.5rem}
 .btn-green{background:#0a5c26;color:#fff;font-weight:700;padding:12px;border-radius:10px}
 .btn-green:hover{background:#083d1a;color:#FFD54F}
-.form-control:focus{border-color:#0a5c26;box-shadow:0 0 0 3px rgba(10,92,38,.15)}
 .feat{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px 14px;display:flex;gap:12px;margin-bottom:12px;backdrop-filter:blur(6px)}
 .feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:#FFD54F;display:grid;place-items:center}
+.eye-btn{cursor:pointer}
 </style></head>
 <body>
 <div class="container-fluid"><div class="row g-0">
 <div class="col-lg-6 left d-none d-lg-flex">
 <div>
-<div class="badge-m mb-4"><i class="bi bi-person-plus-fill"></i> NEW CITIZEN ONBOARDING • eCITIZEN</div>
-<h1>Join <span class="gold">1.1 Million</span><br>Citizens on<br>Murang'a eService</h1>
-<p class="mt-3" style="opacity:.9;max-width:500px">Create your verified eCitizen account. One account for all county services — water, roads, garbage, health, permits.</p>
+<div class="badge-m mb-4"><i class="bi bi-shield-lock-fill"></i> SECURE • eCITIZEN VERIFIED</div>
+<h1>Join Murang'a<br>eService<span class="gold">.</span></h1>
+<p class="mt-3" style="opacity:.9;max-width:500px">Create your verified citizen account in 1 minute. One account for all County services.</p>
 <div class="mt-4" style="max-width:480px">
-<div class="feat"><i class="bi bi-shield-lock"></i><div><b>Verified Identity</b><div class="small opacity-75">ID + Phone verification for security</div></div></div>
-<div class="feat"><i class="bi bi-lightning"></i><div><b>Instant Activation</b><div class="small opacity-75">Account active immediately after registration</div></div></div>
-<div class="feat"><i class="bi bi-phone"></i><div><b>M-Pesa & SMS Alerts</b><div class="small opacity-75">Get status updates via SMS on your phone</div></div></div>
+<div class="feat"><i class="bi bi-person-check"></i><div><b>Verified Account</b><div class="small opacity-75">ID + Phone verification</div></div></div>
+<div class="feat"><i class="bi bi-clock-history"></i><div><b>Track Requests</b><div class="small opacity-75">Real-time status updates</div></div></div>
+<div class="feat"><i class="bi bi-shield-check"></i><div><b>ODPC Secure</b><div class="small opacity-75">Data Protection Act 2019</div></div></div>
 </div>
 </div>
-<small class="mt-auto opacity-50">Already more citizens are registering this month</small>
+<small class="mt-auto opacity-50">© {{ copyright_year }} Murang'a County PSB • Developed by {{ developer_name }}</small>
 </div>
 
 <div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4">
-<div class="card-reg p-4 p-md-5 w-100" style="max-width:460px">
-<div class="avatar-box"><img src="/static/avatar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'"></div>
-<div class="text-center mb-3"><h5 class="fw-bold mb-1">Citizen Registration</h5><small class="text-muted">Create your eCitizen account • Free & Secure</small></div>
+<div class="card-reg p-4 p-md-5 w-100" style="max-width:500px">
+<div class="avatar-box">📝</div>
+<div class="text-center mb-3"><h5 class="fw-bold mb-1">Create Account</h5><small class="text-muted">eCitizen verified registration</small></div>
 
-<!-- FLASH ERROR MESSAGE - THIS WAS MISSING -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
-      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" role="alert" style="border-radius:10px;">
-        {{ message }}
-      </div>
+      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>
     {% endfor %}
   {% endif %}
 {% endwith %}
 
-<form method="POST" onsubmit="return validateAll()">
-<div class="row g-2 mb-2">
-<div class="col-12"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-person"></i></span><input class="form-control" name="full_name" placeholder="Full Name as per ID" required minlength="3"></div></div>
-</div>
-
-<div class="row g-2 mb-2">
-<div class="col-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-card-text"></i></span><input class="form-control" name="id_number" id="idnum" placeholder="ID Number" required inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div></div>
-<div class="col-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span><input class="form-control" name="phone" id="phone" placeholder="Phone 07..." required maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,''); this.setCustomValidity('')" oninvalid="this.setCustomValidity('Enter valid 0712345678')"></div></div>
-</div>
-<small class="text-muted d-block mb-2" style="font-size:.70rem"><i class="bi bi-info-circle"></i> Phone must be 10 digits, e.g., 0712345678 • ID numbers only</small>
-
+<form method="POST">
+<div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-person"></i></span><input class="form-control" name="full_name" placeholder="Full Name" required></div>
+<div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-card-text"></i></span><input class="form-control" name="id_number" placeholder="ID Number" required></div>
 <div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" type="email" placeholder="Email Address" required></div>
-<div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-key"></i></span><input class="form-control" name="password" type="password" placeholder="Create Password (min 6 chars)" required minlength="6"></div>
+<div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-phone"></i></span><input class="form-control" name="phone" placeholder="Phone (07...)" required></div>
 
-<button class="btn btn-green w-100"><i class="bi bi-person-check me-1"></i> Create My Account</button>
+<div class="input-group mb-2">
+<span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+<input class="form-control" name="password" id="password" type="password" placeholder="Password (min 6)" required minlength="6">
+<span class="input-group-text bg-white eye-btn" id="togglePassword"><i class="bi bi-eye-slash" id="eyeIcon1"></i></span>
+</div>
+
+<div class="input-group mb-3">
+<span class="input-group-text bg-white"><i class="bi bi-lock-fill"></i></span>
+<input class="form-control" id="confirm_password" type="password" placeholder="Confirm Password" required minlength="6">
+<span class="input-group-text bg-white eye-btn" id="toggleConfirm"><i class="bi bi-eye-slash" id="eyeIcon2"></i></span>
+</div>
+
+<button class="btn btn-green w-100">Create Account</button>
 </form>
 
 <div class="text-center mt-4">
-<p class="small mb-0">Already have account? <a href="/login" class="fw-bold text-success text-decoration-none">Login Here →</a></p>
-<div class="mt-3 d-flex justify-content-center gap-2 opacity-50 small"><i class="bi bi-lock-fill"></i> Data Protected <span>•</span> ODPC Compliant</div>
+<p class="small mb-0">Already have account? <a href="/login" class="fw-bold text-success text-decoration-none">Login →</a></p>
 <div style="text-align:center; padding:8px; margin-top:15px; background:#0a5c26; color:white; font-size:10px; border-radius:6px;">
-© {{ copyright_year }} Murang'a PSB eService Portal • Developed by soloh_kim
+© {{ copyright_year }} Murang'a PSB eService Portal • Developed by {{ developer_name }}
 </div>
 </div>
 </div>
 </div>
 </div></div>
+
 <script>
-function validateAll(){
- const p=document.getElementById('phone').value;
- const id=document.getElementById('idnum').value;
- if(!/^(07|01)[0-9]{8}$/.test(p)){ alert('Invalid Phone! Use 0712345678 format (10 digits, starts with 07 or 01)'); return false; }
- if(id.length < 5){ alert('Invalid ID Number'); return false; }
- return true;
+function setupToggle(btnId, inputId, iconId){
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  btn.addEventListener('click', () => {
+    const type = input.type === 'password' ? 'text' : 'password';
+    input.type = type;
+    icon.classList.toggle('bi-eye');
+    icon.classList.toggle('bi-eye-slash');
+  });
 }
+setupToggle('togglePassword','password','eyeIcon1');
+setupToggle('toggleConfirm','confirm_password','eyeIcon2');
 </script>
 </body></html>
