@@ -19,6 +19,7 @@ def get_db():
     return db
 
 def init_db():
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     with sqlite3.connect(DATABASE) as db:
         db.executescript("""
         CREATE TABLE IF NOT EXISTS users (
@@ -42,14 +43,18 @@ def init_db():
                        ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
         db.commit()
 
+# IMPORTANT: This runs on Render with gunicorn!
+init_db()
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
-    if db is not None: db.close()
+    if db is not None: 
+        db.close()
 
-def allowed_file(f): return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
+def allowed_file(f): 
+    return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
 
-# === CYBERSECURITY: SESSION TIMEOUT & HEADERS ===
 @app.before_request
 def check_session_timeout():
     if request.endpoint in ('login', 'register', 'static', 'home', None):
@@ -74,7 +79,6 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Cache-Control'] = 'no-store'
     return response
-# === END SECURITY ===
 
 @app.route('/')
 def home(): return redirect(url_for('login'))
@@ -176,5 +180,4 @@ def update_request(req_id):
     return redirect(url_for('admin_dashboard'))
 
 if __name__=='__main__':
-    with app.app_context(): init_db()
     app.run(debug=True)
