@@ -38,6 +38,17 @@ body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.
 <div class="avatar-box"><img src="/static/avatar.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'"></div>
 <div class="text-center mb-3"><h5 class="fw-bold mb-1">Citizen Registration</h5><small class="text-muted">Create your eCitizen account • Free & Secure</small></div>
 
+<!-- FLASH ERROR MESSAGE - THIS WAS MISSING -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" role="alert" style="border-radius:10px;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="POST" onsubmit="return validateAll()">
 <div class="row g-2 mb-2">
 <div class="col-12"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-person"></i></span><input class="form-control" name="full_name" placeholder="Full Name as per ID" required minlength="3"></div></div>
@@ -58,6 +69,9 @@ body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.
 <div class="text-center mt-4">
 <p class="small mb-0">Already have account? <a href="/login" class="fw-bold text-success text-decoration-none">Login Here →</a></p>
 <div class="mt-3 d-flex justify-content-center gap-2 opacity-50 small"><i class="bi bi-lock-fill"></i> Data Protected <span>•</span> ODPC Compliant</div>
+<div style="text-align:center; padding:8px; margin-top:15px; background:#0a5c26; color:white; font-size:10px; border-radius:6px;">
+© {{ copyright_year }} Murang'a PSB eService Portal • Developed by soloh_kim
+</div>
 </div>
 </div>
 </div>
