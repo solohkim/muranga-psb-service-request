@@ -1,62 +1,85 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-<title>Murang'a County - Service Portal</title>
+<title>Login - Murang'a PSB</title>
 <style>
-body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=2000') center/cover no-repeat fixed;font-family:'Segoe UI', sans-serif;}
-.hero-left{color:white;padding:40px;display:flex;flex-direction:column;justify-content:center;min-height:100vh;}
-.hero-left h1{font-weight:800;font-size:2.2rem;line-height:1.2}
-.hero-left h1 span{color:#FFD700}
-.badge-gov{background:#006400;color:#fff;border:1px solid gold;padding:6px 12px;border-radius:20px;font-size:0.75rem;letter-spacing:1px}
-.login-card{background:rgba(255,255,255,0.96);backdrop-filter: blur(10px);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.3);border:none;border-top:4px solid #006400}
-.btn-county{background:#006400;color:white;font-weight:600;padding:11px;border-radius:8px;}
-.btn-county:hover{background:#004d00;color:gold}
-.avatar-wrap{width:84px;height:84px;margin:0 auto 12px;border-radius:50%;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.2);border:3px solid #006400;display:grid;place-items:center;overflow:hidden}
-.avatar-wrap img{width:100%;height:100%;object-fit:cover}
-.feature{ display:flex; gap:12px; align-items:center; margin-bottom:16px; font-size:0.9rem; opacity:0.9 }
-.feature i{ background: rgba(255,255,255,0.15); width:36px; height:36px; display:grid; place-items:center; border-radius:50% }
-.stat{ background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:12px 16px; border-radius:10px; text-align:center; min-width:90px }
-.stat b{ display:block; font-size:1.3rem; color:gold }
-</style>
-</head>
+body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.88) 0%, rgba(0,0,0,0.55) 55%), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000') center/cover fixed;font-family:'Segoe UI',system-ui}
+.left{color:#fff;padding:50px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+.left h1{font-weight:900;font-size:2.8rem;line-height:.95}
+.gold{color:#FFD54F}
+.badge-m{border:1px solid #FFD54F;color:#FFD54F;padding:6px 14px;border-radius:100px;font-size:.70rem;letter-spacing:1.5px;background:rgba(255,213,79,.1)}
+.card-reg{background:#fff;border-radius:22px;box-shadow:0 25px 60px rgba(0,0,0,.45);position:relative;margin-top:35px}
+.avatar-box{width:96px;height:96px;border-radius:50%;margin:-48px auto 14px;background:#fff;border:4px solid #0a5c26;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;font-size:2.5rem}
+.btn-green{background:#0a5c26;color:#fff;font-weight:700;padding:12px;border-radius:10px}
+.btn-green:hover{background:#083d1a;color:#FFD54F}
+.feat{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px 14px;display:flex;gap:12px;margin-bottom:12px;backdrop-filter:blur(6px)}
+.feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:#FFD54F;display:grid;place-items:center}
+.eye-btn{cursor:pointer;user-select:none}
+</style></head>
 <body>
-<div class="container-fluid"><div class="row">
-<div class="col-lg-7 hero-left d-none d-lg-flex">
-<div><div class="badge-gov mb-3">MURANG'A COUNTY GOVERNMENT OFFICIAL PORTAL</div>
-<h1>Murang'a County <br><span>Public Service</span><br>Request System</h1>
-<p class="mt-3" style="max-width:500px; opacity:0.9">Report and track public service issues in your ward. Real-time tracking, transparent service delivery.</p>
-<div class="mt-4">
-<div class="feature"><i class="bi bi-lightning-charge"></i> <div><b>Instant Reporting</b><br><small>Submit with photo & location</small></div></div>
-<div class="feature"><i class="bi bi-geo-alt"></i> <div><b>Ward-Based Routing</b><br><small>Automatically assigned to your ward admin</small></div></div>
-<div class="feature"><i class="bi bi-graph-up"></i> <div><b>Live Tracking</b><br><small>Pending → In Progress → Resolved</small></div></div>
-</div></div></div>
+<div class="container-fluid"><div class="row g-0">
+<div class="col-lg-6 left d-none d-lg-flex">
+<div>
+<div class="badge-m mb-4"><i class="bi bi-shield-lock-fill"></i> SECURE • eCITIZEN VERIFIED</div>
+<h1>Murang'a<br>eService<br>Portal<span class="gold">.</span></h1>
+<p class="mt-3" style="opacity:.9;max-width:500px">Access County Government services securely. Verified by eCitizen, protected under Data Protection Act.</p>
+<div class="mt-4" style="max-width:480px">
+<div class="feat"><i class="bi bi-people-fill"></i><div><b>23,000+ Citizens</b><div class="small opacity-75">Trust our digital services</div></div></div>
+<div class="feat"><i class="bi bi-lightning"></i><div><b>Fast Service</b><div class="small opacity-75">Average 2.3 days response</div></div></div>
+<div class="feat"><i class="bi bi-shield-check"></i><div><b>ODPC Secure</b><div class="small opacity-75">Your data is protected</div></div></div>
+</div>
+</div>
+<small class="mt-auto opacity-50">© {{ copyright_year }} Murang'a County PSB • Developed by {{ developer_name }}</small>
+</div>
 
-<div class="col-lg-5 col-12 d-flex align-items-center justify-content-center p-4" style="min-height:100vh">
-<div class="login-card p-4 p-md-5 w-100" style="max-width:420px">
-<div class="text-center mb-3">
-<div class="avatar-wrap">
-<img src="/static/avatar.png" alt="Avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
-</div>
-<h5 class="fw-bold mb-0">Citizen Login</h5>
-<small class="text-muted">Secure access to your service requests</small>
-</div>
-{% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="alert alert-{{cat}} py-2 small">{{msg}}</div>{% endfor %}{% endwith %}
+<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4">
+<div class="card-reg p-4 p-md-5 w-100" style="max-width:460px">
+<div class="avatar-box">👤</div>
+<div class="text-center mb-3"><h5 class="fw-bold mb-1">Welcome Back</h5><small class="text-muted">Login to your eCitizen account</small></div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="POST">
-<label class="small fw-semibold mb-1">Email Address</label>
-<div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" placeholder="citizen@example.com" required></div>
-<label class="small fw-semibold mb-1">Password</label>
-<div class="input-group mb-4"><span class="input-group-text bg-white"><i class="bi bi-lock"></i></span><input class="form-control" type="password" name="password" placeholder="••••••••" required></div>
-<button class="btn btn-county w-100">Sign In to Portal</button>
-</form>
-<div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-size:13px;">
-<a href="/forgot-password" style="text-decoration:none;">Forgot Password?</a>
-<a href="/register" class="fw-bold text-success text-decoration-none">Create eCitizen Account →</a>
+<div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" type="email" placeholder="Email Address" required></div>
+
+<div class="input-group mb-3">
+<span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+<input class="form-control" name="password" id="password" type="password" placeholder="Password" required>
+<span class="input-group-text bg-white eye-btn" id="togglePassword"><i class="bi bi-eye-slash" id="eyeIcon"></i></span>
 </div>
-<div style="text-align:center; padding:12px; margin-top:20px; background:#0b4d2e; color:white; font-size:11px; border-radius:6px;">
-© {{ copyright_year }} Murang'a County PSB eService Portal<br>Developed by soloh_kim | All Rights Reserved
+
+<button class="btn btn-green w-100"><i class="bi bi-box-arrow-in-right me-1"></i> Login Securely</button>
+</form>
+
+<div class="text-center mt-4">
+<div class="d-flex justify-content-between small">
+<a href="/forgot-password" class="fw-bold text-success text-decoration-none">Forgot Password?</a>
+<a href="/register" class="fw-bold text-success text-decoration-none">Create Account →</a>
+</div>
+<div class="mt-3 d-flex justify-content-center gap-2 opacity-50 small"><i class="bi bi-lock-fill"></i> Data Protected <span>•</span> ODPC Compliant</div>
+<div style="text-align:center; padding:8px; margin-top:15px; background:#0a5c26; color:white; font-size:10px; border-radius:6px;">
+© {{ copyright_year }} Murang'a PSB eService Portal • Developed by {{ developer_name }}
+</div>
 </div>
 </div>
 </div>
 </div></div>
+
+<script>
+const togglePassword = document.querySelector('#togglePassword');
+const password = document.querySelector('#password');
+const eyeIcon = document.querySelector('#eyeIcon');
+togglePassword.addEventListener('click', function () {
+  const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+  password.setAttribute('type', type);
+  eyeIcon.classList.toggle('bi-eye');
+  eyeIcon.classList.toggle('bi-eye-slash');
+});
+</script>
 </body></html>
