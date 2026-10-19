@@ -72,7 +72,7 @@ def check_session_timeout():
                 if now - last_time > timedelta(minutes=15):
                     session.clear()
                     flash("Session expired due to inactivity (15 min). Please login again.", "warning")
-                    return redirect(url_for('login'))
+                    return render_template('register.html')
             except: pass
         session['last_active'] = now.isoformat()
 
