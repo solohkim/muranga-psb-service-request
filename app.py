@@ -90,23 +90,33 @@ def home(): return redirect(url_for('login'))
 def register():
     if request.method == 'POST':
         db = get_db()
-        email = request.form['email'].strip().lower()
-        # Check if already exists first
-        existing = db.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+        email = request.form['email'].strip().lower()  # ALWAYS lower
+        full_name = request.form['full_name'].strip()
+        id_number = request.form['id_number'].strip()
+        phone = request.form['phone'].strip()
+        password = request.form['password']
+
+        # 1. CHECK FIRST - case-insensitive
+        existing = db.execute("SELECT id FROM users WHERE LOWER(email)=?", (email,)).fetchone()
         if existing:
-            flash("This email is already registered. Please login or click Forgot Password.", "warning")
-            return redirect(url_for('login'))
+            flash("Email already exists! This email is already registered. Please login or use Forgot Password.", "danger")
+            return render_template('register.html')
+
+        # 2. Try insert
         try:
             db.execute("INSERT INTO users (full_name, id_number, email, phone, password) VALUES (?,?,?,?,?)",
-                       (request.form['full_name'], request.form['id_number'], email, request.form['phone'], generate_password_hash(request.form['password'])))
+                       (full_name, id_number, email, phone, generate_password_hash(password)))
             db.commit()
             flash("Registration successful! Please login.", "success")
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            flash("This email is already registered. Please login or use Forgot Password.", "warning")
-            return redirect(url_for('login'))
+            # This will still catch if UNIQUE fails
+            flash("Email already exists! Please use a different email or login.", "danger")
+            return render_template('register.html')
         except Exception as e:
-            flash(f"Registration error: {str(e)}", "danger")
+            flash(f"Error: {str(e)}", "danger")
+            return render_template('register.html')
+            
     return render_template('register.html')
 
 @app.route('/login', methods=['GET','POST'])
