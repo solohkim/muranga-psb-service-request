@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<title>Murang'a County - Service Portal</title>
+<style>
+body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=2000') center/cover no-repeat fixed;font-family:'Segoe UI', sans-serif;}
+.hero-left{color:white;padding:40px;display:flex;flex-direction:column;justify-content:center;min-height:100vh;}
+.hero-left h1{font-weight:800;font-size:2.2rem;line-height:1.2}
+.hero-left h1 span{color:#FFD700}
+.badge-gov{background:#006400;color:#fff;border:1px solid gold;padding:6px 12px;border-radius:20px;font-size:0.75rem;letter-spacing:1px}
+.login-card{background:rgba(255,255,255,0.96);backdrop-filter: blur(10px);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.3);border:none;border-top:4px solid #006400}
+.btn-county{background:#006400;color:white;font-weight:600;padding:11px;border-radius:8px;}
+.btn-county:hover{background:#004d00;color:gold}
+.avatar-wrap{width:84px;height:84px;margin:0 auto 12px;border-radius:50%;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.2);border:3px solid #006400;display:grid;place-items:center;overflow:hidden}
+.avatar-wrap img{width:100%;height:100%;object-fit:cover}
+.feature{ display:flex; gap:12px; align-items:center; margin-bottom:16px; font-size:0.9rem; opacity:0.9 }
+.feature i{ background: rgba(255,255,255,0.15); width:36px; height:36px; display:grid; place-items:center; border-radius:50% }
+.stat{ background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:12px 16px; border-radius:10px; text-align:center; min-width:90px }
+.stat b{ display:block; font-size:1.3rem; color:gold }
+</style>
+</head>
+<body>
+<div class="container-fluid"><div class="row">
+<div class="col-lg-7 hero-left d-none d-lg-flex">
+<div><div class="badge-gov mb-3">MURANG'A COUNTY GOVERNMENT OFFICIAL PORTAL</div>
+<h1>Murang'a County <br><span>Public Service</span><br>Request System</h1>
+<p class="mt-3" style="max-width:500px; opacity:0.9">Report and track public service issues in your ward. Real-time tracking, transparent service delivery.</p>
+<div class="mt-4">
+<div class="feature"><i class="bi bi-lightning-charge"></i> <div><b>Instant Reporting</b><br><small>Submit with photo & location</small></div></div>
+<div class="feature"><i class="bi bi-geo-alt"></i> <div><b>Ward-Based Routing</b><br><small>Automatically assigned to your ward admin</small></div></div>
+<div class="feature"><i class="bi bi-graph-up"></i> <div><b>Live Tracking</b><br><small>Pending → In Progress → Resolved</small></div></div>
+</div></div></div>
+
+<div class="col-lg-5 col-12 d-flex align-items-center justify-content-center p-4" style="min-height:100vh">
+<div class="login-card p-4 p-md-5 w-100" style="max-width:420px">
+<div class="text-center mb-3">
+<!-- AVATAR HERE - uses your local file -->
+<div class="avatar-wrap">
+<img src="/static/avatar.png" alt="Avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+</div>
+<h5 class="fw-bold mb-0">Citizen Login</h5>
+<small class="text-muted">Secure access to your service requests</small>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="alert alert-{{cat}} py-2 small">{{msg}}</div>{% endfor %}{% endwith %}
+<form method="POST">
+<label class="small fw-semibold mb-1">Email Address</label>
+<div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" placeholder="citizen@example.com" required></div>
+<label class="small fw-semibold mb-1">Password</label>
+<div class="input-group mb-4"><span class="input-group-text bg-white"><i class="bi bi-lock"></i></span><input class="form-control" type="password" name="password" placeholder="••••••••" required></div>
+<button class="btn btn-county w-100">Sign In to Portal</button>
+</form>
+<div class="text-center mt-4">
+<p class="small mb-2">New citizen? <a href="/register" class="fw-bold text-success text-decoration-none">Create eCitizen Account →</a></p>
+</div>
+</div>
+</div>
+</div></div>
+</body></html>

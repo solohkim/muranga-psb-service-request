@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<title>Dashboard - Murang'a PSB</title>
+<style>
+:root{--green:#0a5c26;--gold:#FFD54F;--light:#f6f9f6}
+body{background:var(--light);font-family:'Segoe UI',system-ui}
+.navbar-m{background:#fff;border-bottom:1px solid #e6ece6;box-shadow:0 2px 12px rgba(0,0,0,.05);position:sticky;top:0;z-index:10}
+.stat-card{background:#fff;border:1px solid #e8eee8;border-radius:16px;padding:18px;transition:.2s;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(0,0,0,.07)}
+.stat-card .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px}
+.total .icon{background:#0a5c26;color:#FFD54F}.pend .icon{background:#fff3cd;color:#856404}.prog .icon{background:#cce5ff;color:#004085}.res .icon{background:#d4edda;color:#155724}
+.req-card{background:#fff;border:1px solid #e8eee8;border-radius:16px;padding:18px;transition:.2s}
+.req-card:hover{box-shadow:0 8px 20px rgba(0,0,0,.06)}
+.badge-pend{background:#fff3cd;color:#664d03;border:1px solid #ffe69c}.badge-prog{background:#cfe2ff;color:#052c65;border:1px solid #b6d4fe}.badge-res{background:#d1e7dd;color:#0a3622;border:1px solid #a3cfbb}
+.btn-new{background:var(--green);color:#fff;border-radius:10px;font-weight:700;padding:8px 16px}
+.btn-new:hover{background:#083d1a;color:var(--gold)}
+.avatar-sm{width:32px;height:32px;border-radius:50%;border:2px solid var(--green);object-fit:cover}
+</style></head>
+<body>
+
+<nav class="navbar-m py-2 px-3 px-lg-4 d-flex justify-content-between align-items-center">
+<a href="/dashboard" class="d-flex align-items-center gap-2 text-decoration-none text-dark" style="cursor:pointer"><img src="/static/avatar.png" class="avatar-sm" style="width:32px;height:32px;border-radius:50%;border:2px solid #0a5c26"><b>Murang'a PSB</b><span class="badge ms-1" style="background:#0a5c26;color:#FFD54F;font-size:.65rem">eSERVICE</span></a>
+<div class="d-flex align-items-center gap-2 small">
+<span class="d-none d-md-inline">👋 {{ session.get('name','solomon kilonzo') }}</span>
+<a href="/logout" class="text-decoration-none" style="color:#0a5c26;font-weight:600"><i class="bi bi-box-arrow-right"></i> Logout</a>
+</div>
+</nav>
+
+<div class="container px-3 px-lg-4 py-4" style="max-width:1100px">
+<!-- STATS -->
+<div class="row g-3 mb-4">
+<div class="col-6 col-md-3"><div class="stat-card total d-flex justify-content-between align-items-center"><div><h3 class="fw-bold mb-0">2</h3><small class="text-muted">Total Requests</small></div><div class="icon"><i class="bi bi-collection"></i></div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card pend d-flex justify-content-between align-items-center"><div><h3 class="fw-bold mb-0">2</h3><small class="text-muted">Pending Review</small></div><div class="icon"><i class="bi bi-hourglass-split"></i></div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card prog d-flex justify-content-between align-items-center"><div><h3 class="fw-bold mb-0">0</h3><small class="text-muted">In Progress</small></div><div class="icon"><i class="bi bi-gear-wide-connected"></i></div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card res d-flex justify-content-between align-items-center"><div><h3 class="fw-bold mb-0">0</h3><small class="text-muted">Resolved</small></div><div class="icon"><i class="bi bi-check-circle"></i></div></div></div>
+</div>
+
+<!-- HEADER + BUTTON -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div><h5 class="fw-bold mb-0">My Service Requests</h5><small class="text-muted">Track your submissions across Murang'a wards</small></div>
+<a href="/new_request" class="btn btn-new"><i class="bi bi-plus-lg"></i> New Request</a>
+</div>
+
+<!-- REQUESTS - KEEP YOUR JINJA LOOP -->
+{% if requests %}
+{% for req in requests %}
+<div class="req-card mb-3">
+<div class="d-flex justify-content-between align-items-start">
+<div class="d-flex gap-2 align-items-center">
+<span class="fw-bold text-muted">#{{ req[0] }}</span>
+<span class="badge rounded-pill px-3 py-1 {% if 'Pending' in req[2] %}badge-pend{% elif 'Progress' in req[2] %}badge-prog{% else %}badge-res{% endif %}">{{ req[2] }}</span>
+<span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> {{ req[4] if req|length>4 else 'Kiharu' }}</span>
+</div>
+<small class="text-muted">{{ req[5] if req|length>5 else '' }}</small>
+</div>
+<h6 class="fw-bold mt-2 mb-1"><i class="bi bi-signpost-2 me-1 text-success"></i> {{ req[1] }}</h6>
+<p class="text-muted small mb-2" style="line-height:1.5">{{ req[3] if req|length>3 else req[2] }}</p>
+<div class="d-flex gap-2 mt-2">
+<div class="progress" style="height:6px;width:100%;max-width:200px"><div class="progress-bar" style="width:{% if 'Pending' in req[2] %}30%{% elif 'Progress' in req[2] %}70%{% else %}100%{% endif %};background:#0a5c26"></div></div>
+<small class="text-muted" style="font-size:.70rem">SLA: 48hrs • Ward Admin Assigned</small>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<!-- FALLBACK FOR YOUR CURRENT SCREENSHOT DATA (if no loop) -->
+<div class="req-card mb-3">
+<div class="d-flex justify-content-between"><div><span class="fw-bold text-muted">#2</span> <span class="badge badge-pend rounded-pill px-3">● Pending</span> <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> Mukuyu</span></div><small class="text-muted">2 hrs ago</small></div>
+<h6 class="fw-bold mt-2"><i class="bi bi-cone-striped text-warning"></i> Road Damage</h6>
+<p class="text-muted small mb-2">There is many road potholes from mukuyu to muranga town</p>
+<div class="progress" style="height:6px;max-width:200px"><div class="progress-bar" style="width:30%;background:#0a5c26"></div></div>
+</div>
+<div class="req-card mb-3">
+<div class="d-flex justify-content-between"><div><span class="fw-bold text-muted">#1</span> <span class="badge badge-pend rounded-pill px-3">● Pending</span> <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> Kiharu</span></div><small class="text-muted">5 hrs ago</small></div>
+<h6 class="fw-bold mt-2"><i class="bi bi-droplet-half text-primary"></i> Water Issue</h6>
+<p class="text-muted small mb-2">No water flow</p>
+<div class="progress" style="height:6px;max-width:200px"><div class="progress-bar" style="width:30%;background:#0a5c26"></div></div>
+</div>
+{% endif %}
+
+<div class="text-center mt-4 p-3 rounded" style="background:#fff;border:1px dashed #0a5c26">
+<small class="text-muted">Need help? Call Murang'a County Hotline: <b style="color:#0a5c26">0700 000 000</b> • Huduma Bora, Maisha Bora</small>
+</div>
+
+</div>
+</body></html>

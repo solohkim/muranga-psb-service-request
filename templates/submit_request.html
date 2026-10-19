@@ -1,0 +1,61 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<title>New Request - Murang'a PSB</title>
+<style>
+:root{--green:#0a5c26;--gold:#FFD54F;--light:#f6f9f6}
+body{background:var(--light);font-family:'Segoe UI',system-ui}
+.navbar-m{background:#fff;border-bottom:1px solid #e6ece6;box-shadow:0 2px 12px rgba(0,0,0,.05);position:sticky;top:0;z-index:10}
+.form-card{background:#fff;border-radius:20px;box-shadow:0 15px 35px rgba(0,0,0,.08);border:1px solid #e8eee8;overflow:hidden}
+.form-header{background:linear-gradient(90deg,#0a5c26,#0f7a34);color:#fff;padding:24px 28px}
+.btn-green{background:var(--green);color:#fff;font-weight:700;padding:12px;border-radius:10px;border:0}
+.btn-green:hover{background:#083d1a;color:var(--gold)}
+.form-control:focus, .form-select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(10,92,38,.15)}
+.upload-box{border:2px dashed #0a5c26;background:#f6f9f6;border-radius:14px;padding:18px;text-align:center;cursor:pointer;transition:.2s}
+.upload-box:hover{background:#edf5ed}
+.avatar-sm{width:32px;height:32px;border-radius:50%;border:2px solid var(--green)}
+</style></head>
+<body>
+
+<nav class="navbar-m py-2 px-3 px-lg-4 d-flex justify-content-between align-items-center">
+<div class="d-flex align-items-center gap-2"><img src="/static/avatar.png" class="avatar-sm"><b>Murang'a PSB</b><span class="badge" style="background:#0a5c26;color:#FFD54F;font-size:.65rem">eSERVICE</span></div>
+<div class="d-flex gap-3 small"><a href="/dashboard" class="text-decoration-none" style="color:#0a5c26;font-weight:600"><i class="bi bi-grid"></i> Dashboard</a><a href="/logout" class="text-muted text-decoration-none"><i class="bi bi-box-arrow-right"></i> Logout</a></div>
+</nav>
+
+<div class="container py-4" style="max-width:800px">
+<a href="/dashboard" class="text-decoration-none small mb-3 d-inline-block" style="color:#0a5c26"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+
+<div class="form-card">
+<div class="form-header">
+<div class="d-flex justify-content-between align-items-center">
+<div><h5 class="mb-1 fw-bold"><i class="bi bi-plus-circle me-2"></i>Submit New Service Request</h5><small style="opacity:.9">All fields verified • GPS & Ward auto-captured • Photo evidence supported</small></div>
+<span class="badge" style="background:var(--gold);color:#000"><i class="bi bi-lightning-charge"></i> FAST TRACK</span>
+</div>
+</div>
+
+<div class="p-4 p-md-5">
+<form method="POST" enctype="multipart/form-data">
+<div class="row g-3 mb-3">
+<div class="col-md-6"><label class="small fw-bold mb-1"><i class="bi bi-tag"></i> Category *</label><select class="form-select" name="category" required><option value="">Select Issue Type</option><option>Road Damage</option><option>Water Issue</option><option>Garbage Collection</option><option>Street Lighting</option><option>Health Facility</option><option>Drainage</option><option>Other</option></select></div>
+<div class="col-md-6"><label class="small fw-bold mb-1"><i class="bi bi-geo-alt"></i> Location / Ward *</label><select class="form-select" name="location" required><option value="">Select Ward</option><option>Kiharu</option><option>Mukuyu</option><option>Township</option><option>Kangema</option><option>Mathioya</option><option>Kigumo</option><option>Kandara</option><option>Gatanga</option></select></div>
+</div>
+
+<div class="mb-3"><label class="small fw-bold mb-1"><i class="bi bi-card-text"></i> Description *</label><textarea class="form-control" name="description" rows="4" placeholder="Describe the issue clearly... e.g., 'There are many potholes from Mukuyu to Muranga town, about 500m stretch, risky for boda boda'" required minlength="10"></textarea><small class="text-muted" style="font-size:.70rem">Min 10 characters • Be specific for faster resolution</small></div>
+
+<div class="mb-4"><label class="small fw-bold mb-1"><i class="bi bi-camera"></i> Evidence Photo (Optional but Recommended)</label>
+<label class="upload-box w-100 d-block" for="imgup"><i class="bi bi-cloud-upload fs-3" style="color:#0a5c26"></i><div class="small fw-bold mt-1">Click to upload photo</div><small class="text-muted">PNG, JPG up to 5MB • Shows proof to Ward Admin</small><input type="file" id="imgup" name="image" accept=".png,.jpg,.jpeg" class="d-none" onchange="this.nextElementSibling.textContent=this.files[0]?.name||''"><div class="small mt-2 text-success fw-bold"></div></label></div>
+
+<div class="d-flex gap-2">
+<button class="btn btn-green flex-grow-1"><i class="bi bi-send-fill me-1"></i> Submit Request to Ward Admin</button>
+<a href="/dashboard" class="btn btn-light border px-4">Cancel</a>
+</div>
+
+<div class="mt-4 p-3 rounded" style="background:#f6f9f6;border:1px solid #e0ebe0"><small><b style="color:#0a5c26"><i class="bi bi-shield-check"></i> What happens next?</b><br>1. Request goes to your Ward Admin instantly • 2. Status: Pending → In Progress (within 24hrs) • 3. You get SMS update • 4. Resolved in 48hrs SLA</small></div>
+
+</form>
+</div>
+</div>
+
+<div class="text-center mt-3"><small class="text-muted">Huduma Bora, Maisha Bora • Murang'a County Government • 2026</small></div>
+</div>
+</body></html>
