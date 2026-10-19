@@ -35,7 +35,6 @@ body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgb
 <div class="col-lg-5 col-12 d-flex align-items-center justify-content-center p-4" style="min-height:100vh">
 <div class="login-card p-4 p-md-5 w-100" style="max-width:420px">
 <div class="text-center mb-3">
-<!-- AVATAR HERE - uses your local file -->
 <div class="avatar-wrap">
 <img src="/static/avatar.png" alt="Avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
 </div>
@@ -43,7 +42,6 @@ body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgb
 <small class="text-muted">Secure access to your service requests</small>
 </div>
 {% with messages = get_flashed_messages(with_categories=true) %}{% for cat, msg in messages %}<div class="alert alert-{{cat}} py-2 small">{{msg}}</div>{% endfor %}{% endwith %}
-<div class="text-end mb-2" style="font-size:13px;"><a href="/forgot-password">Forgot Password?</a></div>
 <form method="POST">
 <label class="small fw-semibold mb-1">Email Address</label>
 <div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" placeholder="citizen@example.com" required></div>
@@ -51,13 +49,14 @@ body{margin:0;min-height:100vh;background: linear-gradient(rgba(0,0,0,0.55), rgb
 <div class="input-group mb-4"><span class="input-group-text bg-white"><i class="bi bi-lock"></i></span><input class="form-control" type="password" name="password" placeholder="••••••••" required></div>
 <button class="btn btn-county w-100">Sign In to Portal</button>
 </form>
-<div class="text-center mt-4">
-<p class="small mb-2">New citizen? <a href="/register" class="fw-bold text-success text-decoration-none">Create eCitizen Account →</a></p>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-size:13px;">
+<a href="/forgot-password" style="text-decoration:none;">Forgot Password?</a>
+<a href="/register" class="fw-bold text-success text-decoration-none">Create eCitizen Account →</a>
+</div>
+<div style="text-align:center; padding:12px; margin-top:20px; background:#0b4d2e; color:white; font-size:11px; border-radius:6px;">
+© {{ copyright_year }} Murang'a County PSB eService Portal<br>Developed by soloh_kim | All Rights Reserved
 </div>
 </div>
 </div>
 </div></div>
-<div style="text-align:center; padding:12px; margin-top:30px; background:#0b4d2e; color:white; font-size:12px;">
-© {{ copyright_year }} Murang'a County PSB eService Portal<br>Developed by soloh_kim | All Rights Reserved
-</div>
 </body></html>
