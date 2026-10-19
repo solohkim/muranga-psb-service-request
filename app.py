@@ -10,7 +10,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
-DEVELOPER_NAME = "YOUR FULL NAME HERE - Replace this" # <-- CHANGE THIS!
+DEVELOPER_NAME = "soloh_kim" # <-- developer
 COPYRIGHT_YEAR = "2026"
 
 def get_db():
@@ -49,7 +49,7 @@ init_db()
 
 @app.context_processor
 def inject_copyright():
-    return dict(developer_name=DEVELOPER_NAME, copyright_year=COPYRIGHT_YEAR)
+    return dict(developer_name=soloh_kim, copyright_year=2026)
 
 @app.teardown_appcontext
 def close_connection(exception):
