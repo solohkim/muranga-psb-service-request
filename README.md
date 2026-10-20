@@ -1,67 +1,45 @@
-# Murang'a County PSB - Citizen Service Request System
-**Huduma Bora, Maisha Bora | County Government E-Service Portal**
+# Murang'a County - PSB Service Request Management System
 
-> Built for Murang'a County Public Service Board 2026 - Final Year Project by soloh_kim © 2026
-> **Data Protection Act 2019 (ODPC) Compliant**
+> Huduma Bora, Maisha Bora | Developed by [soloh_kim](https://www.linkedin.com/in/soloh-kim/) © 2026
 
-### Live Links
-- **GitHub:** https://github.com/solohkim/muranga-psb-service-request
-- **Live Demo:** https://muranga-psb-service-request.onrender.com
+A full-stack web application for Murang'a County Public Service Board (PSB) to manage citizen service requests like Health Facility, Water Issues, Drainage, etc. Built for efficiency, transparency, and SLA compliance (48hrs).
 
-### Overview
-A secure citizen e-service portal where citizens can register, submit service requests with location (8 wards: Kiharu, Kangema, Mathioya, Kigumo, Maragua, Kandara, Gatanga, Makuyu) and photo evidence, and track status. Admins manage all requests, filter by status, update status with remarks, delete requests, view all registered members, and view evidence thumbnails. Built with Murang'a County green/gold theme - classy, responsive, professional.
+**Live Demo:** https://muranga-psb-service-request.onrender.com/
 
-### Core Features
-**Citizen:**
-- Registration with strict validation (Name letters only, ID 7-8 digits, Phone 07xxxxxxxx 10 digits, Unique email)
-- Login/Logout with 15min session timeout
-- Dashboard with stats (Total/Pending/In Progress/Resolved)
-- Submit Request with category, ward, description, photo upload (png/jpg/jpeg)
-- **Edit Own Pending Requests** - `/citizen/request/<id>/edit` - No 500 error
-- Track status + admin remarks timeline
-- Forgot Password with email verification
+---
 
-**Admin:**
-- View all requests with citizen info (name, phone), evidence thumbnails
-- **Filter/Sort Services:** All / Pending / In Progress / Resolved - Clickable stat cards + filter pills (`/admin?status=Pending`)
-- Update status (Pending/In Progress/Resolved), add admin remarks
-- **Delete Requests:** Admin can delete any request
-- **Members Tracking Page:** `/admin/users` - View all registered citizens with total requests count, pending/resolved breakdown, join date, ID number, phone, email
-- **Delete Members:** Full right to erasure (deletes user + all their requests) - ODPC Compliant
-- Real-time counts dashboard
+### ✨ Key Features
 
-**UI/UX:**
-- Murang'a green #0a5c26 / gold #FFD54F, Bootstrap 5.3, Bootstrap Icons, responsive
-- Avatar initials, status badges (Pending yellow, In Progress blue, Resolved green), clickable logos, filter active states
+**For Citizens:**
+- Secure Registration & Login (Full Name validation, ID 7/8 digits, 07XXXXXXXX phone)
+- Submit requests with image evidence (png/jpg/jpeg, 5MB max)
+- Dashboard with stats (Total, Pending, In Progress, Resolved)
+- Edit/Delete only Pending requests
+- Duplicate detection & cleanup (exact category+location+description)
+- Session timeout 15 mins + security headers
+- Profile update
 
-### Security & ODPC Compliance (Data Protection Act 2019)
-- **Password Security:** `werkzeug.security generate_password_hash / check_password_hash` - never plain text
-- **Session Management:** 15min inactive timeout via `@app.before_request`, `PERMANENT_SESSION_LIFETIME`, auto logout, `Cache-Control: no-store`
-- **Security Headers:** X-Frame-Options DENY, X-Content-Type-Options nosniff
-- **Validation:** Server-side + client-side - Full name letters only, ID digits 7-8, Phone 10 digits 07..., Email unique check (case-insensitive), File type whitelist png/jpg/jpeg + secure_filename
-- **RBAC:** Role-based access control - citizen cannot access /admin, admin cannot access citizen edit
-- **ODPC Rights:** 
-    - Consent on registration
-    - Right to Access: /admin/users shows all personal data
-    - Right to Erasure: /admin/user/<id>/delete + /admin/request/<id>/delete
-    - Data Minimization: Only collects full_name, id_number, email, phone
-    - Purpose Limitation: Data used only for service delivery
+**For Admin (PSB Control):**
+- Secure Admin Panel `/admin` - admin@muranga.go.ke / admin123
+- **New v2.0:** Clean Details column with View button only (no cluttered description)
+- View full request detail page `/admin/request/<id>` with citizen info, image, full description
+- Filter by status: All / Pending / In Progress / Resolved
+- Stats cards: Total, Pending, In Progress, Resolved
+- Update status + admin remarks
+- Delete requests
+- Members management `/admin/users` - view users, total requests, delete user
+- Image evidence preview with lightbox
 
-### Bonus Features
-- Forgot Password module
-- Citizen edit own request
-- Members tracking with request stats per user
-- Members can edit request, delete and resubmit if pending
-- Admin filter by status with URL query param
-- Admin can view members
-- Evidence image thumbnails with preview
-- Flash messages with categories (success/danger/warning)
+### 🛠️ Tech Stack
 
-### Tech Stack
-Flask 3.0, SQLite (row_factory), Werkzeug Security, Bootstrap 5.3, Bootstrap Icons, gunicorn
+- **Backend:** Flask (Python), Werkzeug, Gunicorn
+- **Database:** PostgreSQL (Render) + SQLite (local dev) - auto-detected via `DATABASE_URL`
+- **Frontend:** Bootstrap 5.3, Bootstrap Icons, Custom CSS (Murang'a Green #0a5c26 & Gold #FFD54F)
+- **Security:** Password hashing, session timeout, X-Content-Type-Options, X-Frame-Options, Cache-Control: no-store
+- **Storage:** `/tmp/uploads` on Render, `static/uploads` locally
+- **Deployment:** Render.com
 
-### Setup Locally
-```bash
+### 📂 Project Structure
 pip install -r requirements.txt
 python app.py
 # Open http://127.0.0.1:5000
@@ -109,6 +87,14 @@ Muranga_PSB_Service_Request_System/
     /admin/users - members tracking
     /admin/user/<id>/delete - delete member + requests/logout
 
+
+
+```bash
+git clone https://github.com/solohkim/muranga-psb-service-request.git
+cd muranga-psb-service-request
+pip install -r requirements.txt
+python app.py
+# Open http://127.0.0.1:5000
 
 
 ## Murang'a PSB eService
