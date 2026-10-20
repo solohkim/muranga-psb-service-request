@@ -206,7 +206,6 @@ def new_request():
     try: return render_template('new_request.html')
     except: return render_template('submit_request.html')
 
-# === FIXED: CITIZEN CAN EDIT OWN REQUEST - NO 500 ===
 @app.route('/citizen/request/<int:req_id>/edit', methods=['GET','POST'])
 def edit_citizen_request(req_id):
     if 'user_id' not in session:
@@ -217,7 +216,6 @@ def edit_citizen_request(req_id):
         if not req:
             flash("Request not found or not allowed", "danger")
             return redirect(url_for('citizen_dashboard'))
-        # Only block edit if not pending - but allow viewing
         if req['status'] != 'Pending' and request.method == 'GET':
             flash("Only Pending requests can be edited", "warning")
             return redirect(url_for('citizen_dashboard'))
@@ -232,7 +230,6 @@ def edit_citizen_request(req_id):
             return redirect(url_for('citizen_dashboard'))
         return render_template('edit_request.html', req=req)
     except Exception as e:
-        # This prevents 500 and shows error in logs
         print(f"EDIT ERROR: {e}")
         flash(f"Error loading edit page: {e}", "danger")
         return redirect(url_for('citizen_dashboard'))
@@ -269,6 +266,34 @@ def delete_request(req_id):
     db.commit()
     flash(f"Request #{req_id} deleted by admin", "success")
     return redirect(url_for('admin_dashboard'))
+
+# === NEW: MEMBERS TRACKING PAGE ===
+@app.route('/admin/users')
+def admin_users():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    db = get_db()
+    users = db.execute("""
+        SELECT u.*, 
+        (SELECT COUNT(*) FROM requests WHERE user_id=u.id) as total_requests,
+        (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Pending') as pending,
+        (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Resolved') as resolved
+        FROM users u ORDER BY u.created_at DESC
+    """).fetchall()
+    total_users = db.execute("SELECT COUNT(*) FROM users WHERE role='citizen'").fetchone()[0]
+    return render_template('admin_users.html', users=users, total_users=total_users)
+
+@app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+def delete_user(user_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    db = get_db()
+    # Delete requests first, then user (ODPC right to erasure)
+    db.execute("DELETE FROM requests WHERE user_id=?", (user_id,))
+    db.execute("DELETE FROM users WHERE id=? AND role='citizen'", (user_id,))
+    db.commit()
+    flash(f"User #{user_id} and all their requests deleted (ODPC compliant)", "success")
+    return redirect(url_for('admin_users'))
 
 if __name__=='__main__':
     app.run(debug=True)

@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<title>Members - Murang'a PSB</title>
+<style>:root{--green:#0a5c26;--gold:#FFD54F;--light:#f6f9f6} body{background:var(--light);font-family:'Segoe UI'} .navbar-m{background:#111;border-bottom:3px solid var(--green);position:sticky;top:0;z-index:10} .table-card{background:#fff;border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.06);border:1px solid #e8eee8;overflow:hidden}</style>
+</head><body>
+<nav class="navbar-m py-2 px-3 d-flex justify-content-between align-items-center">
+<a href="/admin" class="text-white text-decoration-none fw-bold"><i class="bi bi-arrow-left"></i> Back to Control</a>
+<span class="text-white-50 small">Developed by {{ developer_name }} © {{ copyright_year }}</span>
+</nav>
+<div class="container-fluid px-3 py-4" style="max-width:1400px">
+<h4 class="fw-bold"><i class="bi bi-people-fill" style="color:#0a5c26"></i> Registered Members <span class="badge bg-light text-dark border ms-2">{{ total_users }} citizens</span></h4>
+<div class="table-card mt-3">
+<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+<thead style="background:#f6f9f6"><tr class="small text-muted"><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>ID No</th><th>Requests</th><th>Joined</th><th>Action</th></tr></thead>
+<tbody>{% for u in users %}{% if u['role']=='citizen' %}<tr>
+<td class="fw-bold">#{{ u['id'] }}</td>
+<td>{{ u['full_name'] }}</td><td class="small">{{ u['email'] }}</td><td class="small">{{ u['phone'] }}</td><td><span class="badge bg-light text-dark border">{{ u['id_number'] }}</span></td>
+<td><span class="badge" style="background:#e6f4ea;color:#0a5c26">{{ u['total_requests'] }} total</span> <span class="small text-muted">{{ u['pending'] }}P / {{ u['resolved'] }}R</span></td>
+<td class="small text-muted">{{ u['created_at'] }}</td>
+<td><form method="POST" action="/admin/user/{{ u['id'] }}/delete" onsubmit="return confirm('Delete {{ u['full_name'] }} and ALL their requests?')"><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button></form></td>
+</tr>{% endif %}{% endfor %}</tbody></table></div>
+</div></div></body></html>
