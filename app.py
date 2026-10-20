@@ -239,13 +239,20 @@ def admin_dashboard():
     if session.get('role')!='admin': 
         return redirect(url_for('login'))
     db=get_db()
-    all_reqs=db.execute("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id ORDER BY r.created_at DESC").fetchall()
+    # NEW: Get filter from URL ?status=Pending / In Progress / Resolved / All
+    status_filter = request.args.get('status', 'All')
+    
+    if status_filter == 'All' or not status_filter:
+        all_reqs = db.execute("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id ORDER BY r.created_at DESC").fetchall()
+    else:
+        all_reqs = db.execute("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id WHERE r.status=? ORDER BY r.created_at DESC", (status_filter,)).fetchall()
+
     total=db.execute("SELECT COUNT(*) FROM requests").fetchone()[0]
     pending=db.execute("SELECT COUNT(*) FROM requests WHERE status='Pending'").fetchone()[0]
     inprog=db.execute("SELECT COUNT(*) FROM requests WHERE status='In Progress'").fetchone()[0]
     resolved=db.execute("SELECT COUNT(*) FROM requests WHERE status='Resolved'").fetchone()[0]
     by_category=db.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category").fetchall()
-    return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category)
+    return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category, current_filter=status_filter)
 
 @app.route('/admin/update/<int:req_id>', methods=['POST'])
 def update_request(req_id):

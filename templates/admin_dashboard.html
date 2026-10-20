@@ -17,6 +17,7 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 .btn-update:hover{background:#083d1a;color:var(--gold)}
 .btn-delete{background:#fff0f0;color:#b42318;border:1px solid #f5c2c0;border-radius:8px;font-weight:600}
 .btn-delete:hover{background:#b42318;color:#fff}
+.filter-active{box-shadow:0 0 0 2px rgba(10,92,38,.2);font-weight:700}
 </style></head>
 <body>
 
@@ -42,15 +43,28 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 {% endwith %}
 
 <div class="row g-3 mb-4">
-<div class="col-6 col-lg-3"><div class="stat-card d-flex justify-content-between"><div><h3 class="fw-bold mb-0">{{ total }}</h3><small class="text-muted">Total Requests</small></div><div class="icon-box" style="background:#0a5c26;color:#FFD54F"><i class="bi bi-collection-fill"></i></div></div></div>
-<div class="col-6 col-lg-3"><div class="stat-card d-flex justify-content-between"><div><h3 class="fw-bold mb-0">{{ pending }}</h3><small class="text-muted">Pending Review</small></div><div class="icon-box" style="background:#fff8e1;color:#664d03"><i class="bi bi-hourglass-split"></i></div></div></div>
-<div class="col-6 col-lg-3"><div class="stat-card d-flex justify-content-between"><div><h3 class="fw-bold mb-0">{{ inprog }}</h3><small class="text-muted">In Progress</small></div><div class="icon-box" style="background:#e8f0fe;color:#084298"><i class="bi bi-gear-wide-connected"></i></div></div></div>
-<div class="col-6 col-lg-3"><div class="stat-card d-flex justify-content-between"><div><h3 class="fw-bold mb-0">{{ resolved }}</h3><small class="text-muted">Resolved</small></div><div class="icon-box" style="background:#e6f4ea;color:#0a5c26"><i class="bi bi-check-circle-fill"></i></div></div></div>
+<div class="col-6 col-lg-3"><a href="/admin?status=All" class="text-decoration-none"><div class="stat-card d-flex justify-content-between {% if current_filter=='All' or not current_filter %}filter-active{% endif %}"><div><h3 class="fw-bold mb-0 text-dark">{{ total }}</h3><small class="text-muted">Total Requests</small></div><div class="icon-box" style="background:#0a5c26;color:#FFD54F"><i class="bi bi-collection-fill"></i></div></div></a></div>
+<div class="col-6 col-lg-3"><a href="/admin?status=Pending" class="text-decoration-none"><div class="stat-card d-flex justify-content-between {% if current_filter=='Pending' %}filter-active{% endif %}"><div><h3 class="fw-bold mb-0 text-dark">{{ pending }}</h3><small class="text-muted">Pending Review</small></div><div class="icon-box" style="background:#fff8e1;color:#664d03"><i class="bi bi-hourglass-split"></i></div></div></a></div>
+<div class="col-6 col-lg-3"><a href="/admin?status=In Progress" class="text-decoration-none"><div class="stat-card d-flex justify-content-between {% if current_filter=='In Progress' %}filter-active{% endif %}"><div><h3 class="fw-bold mb-0 text-dark">{{ inprog }}</h3><small class="text-muted">In Progress</small></div><div class="icon-box" style="background:#e8f0fe;color:#084298"><i class="bi bi-gear-wide-connected"></i></div></div></a></div>
+<div class="col-6 col-lg-3"><a href="/admin?status=Resolved" class="text-decoration-none"><div class="stat-card d-flex justify-content-between {% if current_filter=='Resolved' %}filter-active{% endif %}"><div><h3 class="fw-bold mb-0 text-dark">{{ resolved }}</h3><small class="text-muted">Resolved</small></div><div class="icon-box" style="background:#e6f4ea;color:#0a5c26"><i class="bi bi-check-circle-fill"></i></div></div></a></div>
+</div>
+
+<!-- NEW: FILTER BAR -->
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+  <small class="fw-bold text-muted me-1"><i class="bi bi-funnel"></i> FILTER:</small>
+  <a href="/admin?status=All" class="btn btn-sm {% if current_filter=='All' or not current_filter %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-pill px-3">All ({{ total }})</a>
+  <a href="/admin?status=Pending" class="btn btn-sm {% if current_filter=='Pending' %}btn-warning{% else %}btn-outline-warning{% endif %} rounded-pill px-3"><i class="bi bi-hourglass"></i> Pending ({{ pending }})</a>
+  <a href="/admin?status=In Progress" class="btn btn-sm {% if current_filter=='In Progress' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-3"><i class="bi bi-gear"></i> In Progress ({{ inprog }})</a>
+  <a href="/admin?status=Resolved" class="btn btn-sm {% if current_filter=='Resolved' %}btn-success{% else %}btn-outline-success{% endif %} rounded-pill px-3"><i class="bi bi-check-circle"></i> Resolved ({{ resolved }})</a>
+  {% if current_filter and current_filter!='All' %}
+  <span class="ms-2 badge bg-info text-dark"><i class="bi bi-eye"></i> Showing {{ current_filter }} • {{ requests|length }} records</span>
+  <a href="/admin?status=All" class="btn btn-sm btn-link text-decoration-none">Clear <i class="bi bi-x-circle"></i></a>
+  {% endif %}
 </div>
 
 <div class="table-card">
 <div class="p-3 d-flex justify-content-between align-items-center border-bottom flex-wrap gap-2">
-<h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2" style="color:#0a5c26"></i>Citizen Requests Management <span class="badge bg-light text-dark border ms-2">{{ total }} records</span></h6>
+<h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2" style="color:#0a5c26"></i>Citizen Requests Management <span class="badge bg-light text-dark border ms-2">{{ requests|length }} records {% if current_filter!='All' %} of {{ total }}{% endif %}</span></h6>
 <small class="text-muted"><i class="bi bi-clock"></i> SLA: 48hrs • Admin: {{ developer_name }} © {{ copyright_year }}</small>
 </div>
 
@@ -81,6 +95,8 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 </div>
 </td>
 </tr>
+{% else %}
+<tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>No {{ current_filter }} requests found</td></tr>
 {% endfor %}
 </tbody>
 </table>
