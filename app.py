@@ -18,10 +18,9 @@ else:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "muranga-psb-2026-secret")
-# Fix: always use static/uploads for serving, create both folders
 BASE_UPLOAD = '/tmp/uploads' if os.environ.get('RENDER') else 'static/uploads'
 app.config['UPLOAD_FOLDER'] = BASE_UPLOAD
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
@@ -102,7 +101,6 @@ def allowed_file(f):
     return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
 
 def save_uploaded_image(file):
-    """Save image and return path, or None if fails"""
     if not file or file.filename == '':
         return None
     if not allowed_file(file.filename):
@@ -111,10 +109,8 @@ def save_uploaded_image(file):
         os.makedirs('static/uploads', exist_ok=True)
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
-        # Always save to static/uploads so Flask can serve it
         save_path = os.path.join('static/uploads', filename)
         file.save(save_path)
-        # Also copy to UPLOAD_FOLDER if different (Render /tmp)
         if app.config['UPLOAD_FOLDER'] != 'static/uploads':
             try:
                 import shutil
@@ -226,6 +222,7 @@ def forgot_password():
 @app.route('/logout')
 def logout(): session.clear(); return redirect(url_for('login'))
 
+# === FIXED DASHBOARD - SMART DUPLICATE CHECK ===
 @app.route('/dashboard')
 def citizen_dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -238,13 +235,38 @@ def citizen_dashboard():
     if IS_POSTGRES: 
         try: cur.close(); db.close()
         except: pass
+
+    # Smart duplicate detection: only same category+location+description
+    seen = {}
+    duplicate_count = 0
+    duplicate_ids = []
+    for r in reqs:
+        c = (r['category'] if isinstance(r, dict) else r[2] if len(r)>2 else str(r)) or ''
+        l = (r['location'] if isinstance(r, dict) else r[3] if len(r)>3 else '')
+        d = (r['description'] if isinstance(r, dict) else r[4] if len(r)>4 else '')
+        # dict style for RealDictRow / Row
+        try:
+            c = r['category']; l = r['location']; d = r['description']
+        except:
+            pass
+        key = (str(c).strip().lower(), str(l).strip().lower(), str(d).strip().lower())
+        if key in seen:
+            duplicate_count += 1
+            try:
+                duplicate_ids.append(r['id'])
+            except:
+                pass
+        else:
+            seen[key] = True
+
+    has_duplicates = duplicate_count > 0
+
     try:
         stats={'total':len(reqs),'pending':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Pending']),'inprogress':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='In Progress']),'resolved':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Resolved'])}
     except:
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
-    return render_template('dashboard.html', requests=reqs, stats=stats)
+    return render_template('dashboard.html', requests=reqs, stats=stats, has_duplicates=has_duplicates, duplicate_count=duplicate_count, duplicate_ids=duplicate_ids)
 
-# === FIXED: IMAGE UPLOAD NOW WORKS ===
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -253,9 +275,7 @@ def submit_request():
             category = (request.form.get('category') or request.form.get('service') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or request.form.get('details') or 'No description').strip()
-            # IMAGE - NOW SAVED!
             image_path = save_uploaded_image(request.files.get('image') or request.files.get('evidence') or request.files.get('photo'))
-            
             db=get_db(); cur=get_cursor(db)
             if IS_POSTGRES:
                 cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
@@ -285,9 +305,7 @@ def new_request():
             category = (request.form.get('category') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or '').strip() or 'No drugs at the hospital'
-            # IMAGE - NOW SAVED!
             image_path = save_uploaded_image(request.files.get('image') or request.files.get('evidence') or request.files.get('photo'))
-            
             db = get_db(); cur=get_cursor(db)
             if IS_POSTGRES:
                 cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
@@ -368,9 +386,9 @@ def cleanup_my_duplicates():
         for del_id in to_delete:
             cur.execute(q("DELETE FROM requests WHERE id=? AND user_id=?"), (del_id, session['user_id']))
         db.commit()
-        flash(f"Cleaned {len(to_delete)} duplicate(s)", "success")
+        flash(f"Cleaned {len(to_delete)} duplicate(s) - different issues kept", "success")
     else:
-        flash("No duplicates found", "info")
+        flash("No exact duplicates found - your different issues are safe", "info")
     if IS_POSTGRES:
         try: cur.close(); db.close()
         except: pass

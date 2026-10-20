@@ -54,12 +54,12 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 <a href="/new_request" class="btn btn-new"><i class="bi bi-plus-lg"></i> New Request</a>
 </div>
 
-<!-- DUPLICATE BANNER - AUTO SHOW IF >1 SAME REQUEST -->
-{% if requests and requests|length > 1 %}
+<!-- FIXED DUPLICATE BANNER - ONLY SHOWS FOR TRUE DUPLICATES -->
+{% if has_duplicates %}
 <div class="dup-banner d-flex justify-content-between align-items-center mb-3">
-<div><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><b>Duplicate detected:</b> You have {{ requests|length }} requests with similar content. Clean up to remain with one.</div>
-<form method="POST" action="/citizen/cleanup-duplicates" onsubmit="return confirm('This will keep only the newest request for each unique Category+Location+Description and delete the rest. Continue?')">
-<button type="submit" class="btn btn-sm" style="background:#856404;color:#fff;border-radius:8px;white-space:nowrap"><i class="bi bi-trash3"></i> Delete Duplicates</button>
+<div><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><b>True duplicate found:</b> You have {{ duplicate_count }} exact duplicate(s) (same Category+Location+Description). Different services like Water vs Garbage are OK.</div>
+<form method="POST" action="/citizen/cleanup-duplicates" onsubmit="return confirm('This will keep only the newest for each exact duplicate and delete {{ duplicate_count }} copy(s). Different issues will NOT be deleted. Continue?')">
+<button type="submit" class="btn btn-sm" style="background:#856404;color:#fff;border-radius:8px;white-space:nowrap"><i class="bi bi-trash3"></i> Delete {{ duplicate_count }} Duplicates</button>
 </form>
 </div>
 {% endif %}
