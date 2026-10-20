@@ -442,7 +442,9 @@ def admin_request_detail(request_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
     
-    conn = get_db_connection()
+    import sqlite3
+conn = sqlite3.connect('database.db')
+conn.row_factory = sqlite3.Row
     req = conn.execute('SELECT * FROM requests WHERE id = ?', (request_id,)).fetchone()
     conn.close()
     
