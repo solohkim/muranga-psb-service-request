@@ -6,7 +6,7 @@
 :root{--green:#0a5c26;--gold:#FFD54F}
 body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidden;position:relative}
 .bg-slider{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2}
-.bg-slide{position:absolute;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.5s ease-in-out}
+.bg-slide{position:absolute;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.5s ease-in-out;background-color:#0a1a0f}
 .bg-slide.active{opacity:1}
 .bg-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(90deg, rgba(0,30,10,0.92) 0%, rgba(0,0,0,0.65) 55%)}
 .left{color:#fff;padding:50px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
@@ -21,15 +21,27 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 .feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:var(--gold);display:grid;place-items:center}
 .eye-btn{cursor:pointer}
 .is-invalid{border-color:#dc3545 !important}
+
+/* --- MOBILE FIX --- */
+@media (max-width: 991px){
+  .bg-overlay{background:rgba(0,20,10,0.82)} /* darker on phone for readability */
+  .mobile-wrap{min-height:auto!important;padding:16px!important;align-items:flex-start!important;padding-top:24px!important;padding-bottom:24px!important}
+  .card-reg{margin-top:48px!important;width:100%!important;max-width:100%!important;border-radius:18px!important}
+  .card-reg.p-4{padding:20px!important}
+}
+@media (max-width: 375px){
+  .card-reg{margin-top:40px!important}
+  .avatar-box{width:80px;height:80px;margin:-40px auto 10px;font-size:2rem}
+}
 </style></head>
 <body>
 
 <div class="bg-slider">
-  <div class="bg-slide active" style="background-image:url('{{ url_for('static', filename='images/muranga1.jpg') }}')"></div>
-  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga2.jpg') }}')"></div>
-  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga3.jpg') }}')"></div>
-  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga4.jpg') }}')"></div>
-  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga5.jpg') }}')"></div>
+  <div class="bg-slide active" style="background-image:url('{{ url_for('static', filename='images/muranga1.jpg') }}'), url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga2.jpg') }}'), url('https://images.unsplash.com/photo-1476231682828-37e571bc172f?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga3.jpg') }}'), url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga4.jpg') }}'), url('https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga5.jpg') }}'), url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80')"></div>
 </div>
 <div class="bg-overlay"></div>
 
@@ -48,7 +60,7 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 <small class="mt-auto opacity-50">© {{ copyright_year }} Murang'a County PSB • Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:#FFD54F;text-decoration:underline;font-weight:700;">{{ developer_name }}</a></small>
 </div>
 
-<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4" style="min-height:100vh">
+<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4 mobile-wrap" style="min-height:100vh">
 <div class="card-reg p-4 p-md-5 w-100" style="max-width:500px">
 <div class="avatar-box">📝</div>
 <div class="text-center mb-3"><h5 class="fw-bold mb-1">Create Account</h5><small class="text-muted">eCitizen verified registration</small></div>
