@@ -79,7 +79,21 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 <td><span class="badge rounded-pill" style="background:#e6f4ea;color:#0a5c26;border:1px solid #c3e6cb"><i class="bi bi-tag"></i> {{ r['category'] }}</span></td>
 <td><span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> {{ r['location'] }}</span></td>
 <td>{% if r['status']=='Pending' %}<span class="badge badge-pending"><i class="bi bi-hourglass"></i> Pending</span>{% elif r['status']=='In Progress' %}<span class="badge badge-progress"><i class="bi bi-gear"></i> In Progress</span>{% else %}<span class="badge badge-resolved"><i class="bi bi-check2"></i> Resolved</span>{% endif %}</td>
-<td>{% if r['image_path'] %}<a href="/{{ r['image_path'] }}" target="_blank"><img src="/{{ r['image_path'] }}" style="width:54px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #ddd"></a>{% else %}<small class="text-muted">No image</small>{% endif %}</td>
+<td style="text-align:center; width:110px">
+  {% if r['image_path'] %}
+    {% if r['image_path'].startswith('http') %}
+      <a href="{{ r['image_path'] }}" target="_blank" title="Click to view full image">
+        <img src="{{ r['image_path'] }}" style="width:70px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #ddd" onerror="this.outerHTML='<small class=text-muted>No image<br><small>(link broken)</small></small>'">
+      </a>
+    {% else %}
+      <a href="/{{ r['image_path'].lstrip('/') }}" target="_blank" title="Click to view">
+        <img src="/{{ r['image_path'].lstrip('/') }}" style="width:70px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #ddd" onerror="this.parentElement.innerHTML='<small class=text-muted>No image<br><small style=font-size:.65rem>(expired on Render)</small></small>'">
+      </a>
+    {% endif %}
+  {% else %}
+    <small class="text-muted">No image</small>
+  {% endif %}
+</td>
 <td>
 <div class="d-flex flex-column gap-1">
 <form method="POST" action="/admin/update/{{ r['id'] }}" class="d-flex flex-column gap-1">
