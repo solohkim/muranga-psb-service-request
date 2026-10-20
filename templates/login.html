@@ -23,8 +23,6 @@ body{margin:0;font-family:'Segoe UI',system-ui;overflow-x:hidden;min-height:100v
 .form-control{padding:11px 14px;border-radius:10px}
 .input-group-text{background:#fff;cursor:pointer}
 #themeToggle{position:fixed;top:18px;right:18px;z-index:100;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:var(--gold);display:grid;place-items:center;font-size:1.25rem;cursor:pointer}
-
-/* DARK MODE */
 body.dark-mode .bg-overlay{background:linear-gradient(90deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.80) 55%) !important}
 body.dark-mode .card-login{background:#1a1a1a !important;color:#eee}
 body.dark-mode .card-login .text-muted{color:#999 !important}
@@ -32,7 +30,18 @@ body.dark-mode .avatar-box{background:#1a1a1a !important;border-color:#333 !impo
 body.dark-mode .form-control{background:#262626 !important;color:#fff !important;border-color:#444 !important}
 body.dark-mode .input-group-text{background:#262626 !important;color:#ccc !important;border-color:#444 !important}
 
-/* --- MOBILE INCLUSIVE FIX --- */
+/* --- POP UP ANIMATION - ADDED --- */
+.pop-up{opacity:0;transform:translateY(30px);animation:popUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards}
+@keyframes popUp{to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:0.2s}
+.delay-2{animation-delay:0.4s}
+.delay-3{animation-delay:0.6s}
+.delay-4{animation-delay:0.8s}
+.delay-5{animation-delay:1.0s}
+.delay-6{animation-delay:1.2s}
+.delay-7{animation-delay:1.4s}
+.delay-card{animation-delay:0.7s}
+
 @media (max-width: 991px){
   .bg-overlay{background:linear-gradient(180deg, rgba(0,20,10,0.88) 0%, rgba(0,0,0,0.75) 100%)}
   .main-row{flex-direction:column}
@@ -58,54 +67,43 @@ body.dark-mode .input-group-text{background:#262626 !important;color:#ccc !impor
 <button id="themeToggle"><i class="bi bi-moon-fill" id="themeIcon"></i></button>
 
 <div class="container-fluid"><div class="row g-0 main-row">
-<!-- LEFT - NOW VISIBLE ON MOBILE TOO (INCLUSIVE) -->
 <div class="col-lg-6 left-side">
 <div>
-<div class="badge-m mb-3"><i class="bi bi-shield-lock-fill"></i> WELCOME TO MURANG'A COUNTY E-CITIZEN PLATFORM</div>
-<h1>Murang'a<br>E-Service<br>Portal<span class="gold">.</span></h1>
-<p class="mt-3" style="opacity:.85;max-width:460px;font-size:1.05rem">Access County Government services securely. Verified by eCitizen, protected under Data Protection Act.</p>
+<div class="badge-m mb-3 pop-up delay-1"><i class="bi bi-shield-lock-fill"></i> WELCOME TO MURANG'A COUNTY E-CITIZEN PLATFORM</div>
+<h1 class="pop-up delay-2">Murang'a<br>E-Service<br>Portal<span class="gold">.</span></h1>
+<p class="mt-3 pop-up delay-3" style="opacity:.85;max-width:460px;font-size:1.05rem">Access County Government services securely. Verified by eCitizen, protected under Data Protection Act.</p>
 <div class="mt-4" style="max-width:460px">
-<div class="feat"><i class="bi bi-people-fill"></i><div><b>23,000+ Citizens</b><div class="small" style="opacity:.75">Trust our digital services</div></div></div>
-<div class="feat"><i class="bi bi-lightning-charge-fill"></i><div><b>Fast Service</b><div class="small" style="opacity:.75">Average 2.3 days response</div></div></div>
-<div class="feat"><i class="bi bi-shield-check"></i><div><b>Secure Data</b><div class="small" style="opacity:.75">Your data is protected</div></div></div>
+<div class="feat pop-up delay-4"><i class="bi bi-people-fill"></i><div><b>23,000+ Citizens</b><div class="small" style="opacity:.75">Trust our digital services</div></div></div>
+<div class="feat pop-up delay-5"><i class="bi bi-lightning-charge-fill"></i><div><b>Fast Service</b><div class="small" style="opacity:.75">Average 2.3 days response</div></div></div>
+<div class="feat pop-up delay-6"><i class="bi bi-shield-check"></i><div><b>Secure Data</b><div class="small" style="opacity:.75">Your data is protected</div></div></div>
 </div>
 </div>
-<small class="mt-3 mt-lg-auto d-none d-lg-block" style="opacity:.6">© {{ copyright_year }} Murang'a County PSB Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" style="color:#FFD54F;text-decoration:underline;font-weight:700;">{{ developer_name }}</a></small>
+<small class="mt-3 mt-lg-auto d-none d-lg-block pop-up delay-7" style="opacity:.6;font-weight:800">© {{ copyright_year }} Murang'a County PSB Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" style="color:#FFD54F;text-decoration:underline;font-weight:800;">{{ developer_name }}</a></small>
 </div>
 
-<!-- RIGHT - LOGIN CARD -->
 <div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-3 p-lg-4 mobile-wrap" style="min-height:100vh">
-<div class="card-login p-4 p-md-5 w-100" style="max-width:480px;margin-top:40px">
+<div class="card-login p-4 p-md-5 w-100 pop-up delay-card" style="max-width:480px;margin-top:40px">
 <div class="avatar-box"><i class="bi bi-person-fill" style="color:#4a2c8a"></i></div>
 <div class="text-center mb-4"><h5 class="fw-bold mb-1">Welcome Back</h5><small class="text-muted">Login to your eCitizen account</small></div>
-
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
+  {% if messages %}{% for category, message in messages %}<div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>{% endfor %}{% endif %}
 {% endwith %}
-
 <form method="POST">
 <div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" type="email" placeholder="Email Address" required></div>
 <div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-lock"></i></span><input class="form-control" name="password" id="password" type="password" placeholder="Password" required><span class="input-group-text" id="togglePass"><i class="bi bi-eye-slash" id="eyeIcon"></i></span></div>
 <button class="btn btn-green"><i class="bi bi-box-arrow-in-right"></i> Login Securely</button>
 </form>
-
 <div class="d-flex justify-content-between mt-4 small fw-semibold">
 <a href="/forgot-password" class="text-decoration-none" style="color:var(--green)">Forgot Password?</a>
 <a href="/register" class="text-decoration-none" style="color:var(--green)">Create Account →</a>
 </div>
-
 <div class="text-center mt-4"><small class="text-muted"><i class="bi bi-lock-fill"></i> Data Protected | ODPC Compliant</small></div>
-<div style="text-align:center; padding:9px; margin-top:14px; background:var(--green); color:white; font-size:11px; border-radius:8px;">
-© {{ copyright_year }} Murang'a PSB eService Portal • Developed by {{ developer_name }}
+<div style="text-align:center; padding:9px; margin-top:14px; background:var(--green); color:white; font-size:11px; border-radius:8px;font-weight:800;">
+© {{ copyright_year }} Murang'a PSB eService Portal • Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" style="color:var(--gold);font-weight:800;text-decoration:underline;">{{ developer_name }}</a>
 </div>
 </div>
 </div>
 </div></div>
-
 <script>
 document.getElementById('togglePass').addEventListener('click', function(){
   const input = document.getElementById('password');
