@@ -74,10 +74,15 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 <tbody>
 {% for r in requests %}
 <tr>
-<td class="fw-bold">#{{ r['id'] }}</td>
+<td class="fw-bold"><a href="/admin/request/{{ r['id'] }}" class="text-decoration-none" style="color:#0a5c26">#{{ r['id'] }} <i class="bi bi-box-arrow-up-right" style="font-size:10px"></i></a></td>
 <td><div class="d-flex align-items-center gap-2"><div style="width:30px;height:30px;background:#e6f4ea;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0a5c26;font-weight:700">{{ r['full_name'][0] if r['full_name'] else 'C' }}</div><div><div class="fw-semibold small">{{ r['full_name'] }}</div><small class="text-muted" style="font-size:.70rem">{{ r['phone'] }}</small></div></div></td>
 <td><span class="badge rounded-pill" style="background:#e6f4ea;color:#0a5c26;border:1px solid #c3e6cb"><i class="bi bi-tag"></i> {{ r['category'] }}</span></td>
-<td style="max-width:350px; font-size:13px; white-space:normal;">{{ r['description'] }}</td>
+<td style="max-width:350px; font-size:13px; white-space:normal;">
+  <a href="/admin/request/{{ r['id'] }}" class="text-dark text-decoration-none" title="Click to view full">
+    {{ r['description'][:80] }}{% if r['description']|length > 80 %}...{% endif %}
+    <span class="badge bg-light border text-success"><i class="bi bi-eye"></i> View</span>
+  </a>
+</td>
 <td>{% if r['status']=='Pending' %}<span class="badge badge-pending"><i class="bi bi-hourglass"></i> Pending</span>{% elif r['status']=='In Progress' %}<span class="badge badge-progress"><i class="bi bi-gear"></i> In Progress</span>{% else %}<span class="badge badge-resolved"><i class="bi bi-check2"></i> Resolved</span>{% endif %}</td>
 <td style="text-align:center; width:110px">
   {% if r['image_path'] %}

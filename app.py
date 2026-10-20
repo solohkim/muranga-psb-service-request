@@ -437,6 +437,21 @@ def admin_dashboard():
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category, current_filter=status_filter)
 
+@app.route('/admin/request/<int:request_id>')
+def admin_request_detail(request_id):
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    req = conn.execute('SELECT * FROM requests WHERE id = ?', (request_id,)).fetchone()
+    conn.close()
+    
+    if not req:
+        flash('Request not found', 'danger')
+        return redirect('/admin')
+        
+    return render_template('admin_request_detail.html', r=req, developer_name="soloh_kim", copyright_year=2026)
+
 @app.route('/admin/update/<int:req_id>', methods=['POST'])
 def update_request(req_id):
     if session.get('role')!='admin': return redirect(url_for('login'))
