@@ -21,11 +21,6 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 .feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:var(--gold);display:grid;place-items:center}
 .eye-btn{cursor:pointer}
 .is-invalid{border-color:#dc3545 !important}
-.location-badge{position:fixed;bottom:20px;left:20px;background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:20px;font-size:.8rem;backdrop-filter:blur(5px);z-index:10}
-.dots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
-@media(min-width:992px){.dots{left:25%}}
-.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:.3s}
-.dot.active{background:var(--gold);width:24px;border-radius:5px}
 </style></head>
 <body>
 
@@ -131,11 +126,12 @@ document.getElementById('regForm').addEventListener('submit', function(e){
 
 // SLIDER
 const slides = document.querySelectorAll('.bg-slide');
-const locations = ["Murang'a Tea Farms - Kangema Hills","Community Market - Kiharu Town","Infrastructure Development - Maragua Road","Green Hills - Mathioya Valley","County Growth - Murang'a Town"];
-let current = 0; const badge = document.getElementById('locationText'); const dotsContainer = document.getElementById('dots');
-slides.forEach((_, i) => { const dot = document.createElement('div'); dot.className = 'dot' + (i===0 ? ' active' : ''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); });
-const dots = document.querySelectorAll('.dot');
-function goToSlide(n){ slides[current].classList.remove('active'); dots[current].classList.remove('active'); current = n % slides.length; slides[current].classList.add('active'); dots[current].classList.add('active'); badge.textContent = locations[current]; }
+let current = 0;
+function goToSlide(n){
+  slides[current].classList.remove('active');
+  current = n % slides.length;
+  slides[current].classList.add('active');
+}
 setInterval(() => goToSlide((current+1)%slides.length), 5000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
