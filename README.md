@@ -51,7 +51,9 @@ A secure citizen e-service portal where citizens can register, submit service re
 - Forgot Password module
 - Citizen edit own request
 - Members tracking with request stats per user
+- Members can edit request, delete and resubmit if pending
 - Admin filter by status with URL query param
+- Admin can view members
 - Evidence image thumbnails with preview
 - Flash messages with categories (success/danger/warning)
 
@@ -107,5 +109,12 @@ Muranga_PSB_Service_Request_System/
     /admin/users - members tracking
     /admin/user/<id>/delete - delete member + requests/logout
 
-    DeveloperDeveloped by soloh_kim © 2026
+
+
+## Murang'a PSB eService
+- Live: https://muranga-psb-service-request.onrender.com
+- Admin: admin@muranga.go.ke / admin123
+- Features: Citizen submission with image, Admin management, Duplicate handling
+- Stack: Flask, Postgres, Bootstrap 5
+- Developer: soloh_kim © 2026
 Murang'a County Government - Huduma Bora, Maisha Bora
