@@ -22,9 +22,20 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 .eye-btn{cursor:pointer}
 .is-invalid{border-color:#dc3545 !important}
 
-/* --- MOBILE FIX --- */
+/* --- POP UP ANIMATION - ADDED --- */
+.pop-up{opacity:0;transform:translateY(30px);animation:popUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards}
+@keyframes popUp{to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:0.2s}
+.delay-2{animation-delay:0.4s}
+.delay-3{animation-delay:0.6s}
+.delay-4{animation-delay:0.8s}
+.delay-5{animation-delay:1.0s}
+.delay-6{animation-delay:1.2s}
+.delay-7{animation-delay:1.4s}
+.delay-card{animation-delay:0.7s}
+
 @media (max-width: 991px){
-  .bg-overlay{background:rgba(0,20,10,0.82)} /* darker on phone for readability */
+  .bg-overlay{background:rgba(0,20,10,0.82)}
   .mobile-wrap{min-height:auto!important;padding:16px!important;align-items:flex-start!important;padding-top:24px!important;padding-bottom:24px!important}
   .card-reg{margin-top:48px!important;width:100%!important;max-width:100%!important;border-radius:18px!important}
   .card-reg.p-4{padding:20px!important}
@@ -48,29 +59,25 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 <div class="container-fluid"><div class="row g-0">
 <div class="col-lg-6 left d-none d-lg-flex">
 <div>
-<div class="badge-m mb-4"><i class="bi bi-shield-lock-fill"></i> SECURE • eCITIZEN VERIFIED</div>
-<h1>Join Murang'a<br>eService<span class="gold">.</span></h1>
-<p class="mt-3" style="opacity:.9;max-width:500px">Create your verified citizen account in 1 minute. One account for all County services.</p>
+<div class="badge-m mb-4 pop-up delay-1"><i class="bi bi-shield-lock-fill"></i> SECURE • eCITIZEN VERIFIED</div>
+<h1 class="pop-up delay-2">Join Murang'a<br>eService<span class="gold">.</span></h1>
+<p class="mt-3 pop-up delay-3" style="opacity:.9;max-width:500px">Create your verified citizen account in 1 minute. One account for all County services.</p>
 <div class="mt-4" style="max-width:480px">
-<div class="feat"><i class="bi bi-person-check"></i><div><b>Verified Account</b><div class="small opacity-75">ID + Phone verification</div></div></div>
-<div class="feat"><i class="bi bi-clock-history"></i><div><b>Track Requests</b><div class="small opacity-75">Real-time status updates</div></div></div>
-<div class="feat"><i class="bi bi-shield-check"></i><div><b>ODPC Secure</b><div class="small opacity-75">Data Protection Act 2019</div></div></div>
+<div class="feat pop-up delay-4"><i class="bi bi-person-check"></i><div><b>Verified Account</b><div class="small opacity-75">ID + Phone verification</div></div></div>
+<div class="feat pop-up delay-5"><i class="bi bi-clock-history"></i><div><b>Track Requests</b><div class="small opacity-75">Real-time status updates</div></div></div>
+<div class="feat pop-up delay-6"><i class="bi bi-shield-check"></i><div><b>ODPC Secure</b><div class="small opacity-75">Data Protection Act 2019</div></div></div>
 </div>
 </div>
-<small class="mt-auto opacity-50">© {{ copyright_year }} Murang'a County PSB • Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:#FFD54F;text-decoration:underline;font-weight:700;">{{ developer_name }}</a></small>
+<small class="mt-auto pop-up delay-7" style="opacity:.7;font-weight:800">© {{ copyright_year }} Murang'a County PSB • Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:#FFD54F;text-decoration:underline;font-weight:800;">{{ developer_name }}</a></small>
 </div>
 
 <div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4 mobile-wrap" style="min-height:100vh">
-<div class="card-reg p-4 p-md-5 w-100" style="max-width:500px">
+<div class="card-reg p-4 p-md-5 w-100 pop-up delay-card" style="max-width:500px">
 <div class="avatar-box">📝</div>
 <div class="text-center mb-3"><h5 class="fw-bold mb-1">Create Account</h5><small class="text-muted">eCitizen verified registration</small></div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
+  {% if messages %}{% for category, message in messages %}<div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>{% endfor %}{% endif %}
 {% endwith %}
 
 <form method="POST" id="regForm" novalidate>
@@ -79,26 +86,15 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 <div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" type="email" placeholder="Email Address" required></div>
 <div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-phone"></i></span><input class="form-control" id="phone" name="phone" type="tel" inputmode="numeric" placeholder="Phone 07XXXXXXXX (10 digits)" pattern="07[0-9]{8}" maxlength="10" required></div>
 <small class="text-muted mb-2 d-block" style="font-size:11px;margin-left:45px">Phone must be 10 digits, start with 07</small>
-
-<div class="input-group mb-2">
-<span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
-<input class="form-control" name="password" id="password" type="password" placeholder="Password (min 6)" required minlength="6">
-<span class="input-group-text bg-white eye-btn" id="togglePassword"><i class="bi bi-eye-slash" id="eyeIcon1"></i></span>
-</div>
-
-<div class="input-group mb-3">
-<span class="input-group-text bg-white"><i class="bi bi-lock-fill"></i></span>
-<input class="form-control" id="confirm_password" type="password" placeholder="Confirm Password" required minlength="6">
-<span class="input-group-text bg-white eye-btn" id="toggleConfirm"><i class="bi bi-eye-slash" id="eyeIcon2"></i></span>
-</div>
-
+<div class="input-group mb-2"><span class="input-group-text bg-white"><i class="bi bi-lock"></i></span><input class="form-control" name="password" id="password" type="password" placeholder="Password (min 6)" required minlength="6"><span class="input-group-text bg-white eye-btn" id="togglePassword"><i class="bi bi-eye-slash" id="eyeIcon1"></i></span></div>
+<div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-lock-fill"></i></span><input class="form-control" id="confirm_password" type="password" placeholder="Confirm Password" required minlength="6"><span class="input-group-text bg-white eye-btn" id="toggleConfirm"><i class="bi bi-eye-slash" id="eyeIcon2"></i></span></div>
 <button class="btn btn-green w-100">Create Account</button>
 </form>
 
 <div class="text-center mt-4">
 <p class="small mb-0">Already have account? <a href="/login" class="fw-bold text-success text-decoration-none">Login →</a></p>
-<div style="text-align:center; padding:8px; margin-top:15px; background:#0a5c26; color:white; font-size:10px; border-radius:6px;">
-<a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:white;text-decoration:none;display:block;width:100%;">
+<div style="text-align:center; padding:8px; margin-top:15px; background:#0a5c26; color:white; font-size:10px; border-radius:6px;font-weight:800;">
+<a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:white;text-decoration:none;display:block;width:100%;font-weight:800;">
 © {{ copyright_year }} Murang'a PSB eService Portal • Developed by {{ developer_name }}
 </a>
 </div>
@@ -106,7 +102,6 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 </div>
 </div>
 </div></div>
-
 <script>
 function setupToggle(btnId, inputId, iconId){
   const btn = document.getElementById(btnId);
