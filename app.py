@@ -1,4 +1,5 @@
 import os
+import traceback
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -235,47 +236,72 @@ def citizen_dashboard():
     stats={'total':len(reqs),'pending':len([r for r in reqs if r['status']=='Pending']),'inprogress':len([r for r in reqs if r['status']=='In Progress']),'resolved':len([r for r in reqs if r['status']=='Resolved'])}
     return render_template('dashboard.html', requests=reqs, stats=stats)
 
+# --- FIXED SUBMIT ROUTES - WILL NOT COLLAPSE ---
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
-        image_path=None
-        file=request.files.get('image')
-        if file and file.filename!='' and allowed_file(file.filename):
-            filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        db=get_db(); cur=get_cursor(db)
-        cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                         (session['user_id'], request.form['category'], request.form['location'], request.form['description'], image_path))
-        db.commit()
-        if IS_POSTGRES: cur.close(); db.close()
-        flash("Request submitted!", "success")
-        return redirect(url_for('citizen_dashboard'))
+        try:
+            image_path=None
+            try:
+                file=request.files.get('image')
+                if file and file.filename!='' and allowed_file(file.filename):
+                    filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(save_path)
+                    image_path=save_path
+            except Exception as img_e:
+                print(f"IMAGE SAVE IGNORED: {img_e}")
+            
+            db=get_db(); cur=get_cursor(db)
+            category = request.form.get('category') or request.form.get('service') or 'General'
+            location = request.form.get('location') or request.form.get('ward') or 'Kiharu'
+            description = request.form.get('description') or request.form.get('details') or 'No description'
+            
+            cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
+                             (session['user_id'], category, location, description, image_path))
+            db.commit()
+            if IS_POSTGRES: cur.close(); db.close()
+            flash("Request submitted successfully!", "success")
+            return redirect(url_for('citizen_dashboard'))
+        except Exception as e:
+            traceback.print_exc()
+            flash(f"Submission failed: {e}", "danger")
+            return redirect(url_for('citizen_dashboard'))
     return render_template('submit_request.html')
 
 @app.route('/new_request', methods=['GET','POST'])
 def new_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
-        image_path=None
-        file=request.files.get('image')
-        if file and file.filename!='' and allowed_file(file.filename):
-            filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        category = request.form.get('category','General')
-        location = request.form.get('location', request.form.get('ward','Kiharu'))
-        description = request.form.get('description','')
-        db = get_db(); cur=get_cursor(db)
-        cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                   (session['user_id'], category, location, description, image_path))
-        db.commit()
-        if IS_POSTGRES: cur.close(); db.close()
-        flash("Request submitted successfully!", "success")
-        return redirect(url_for('citizen_dashboard'))
+        try:
+            image_path=None
+            try:
+                file=request.files.get('image')
+                if file and file.filename!='' and allowed_file(file.filename):
+                    filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            except Exception as img_e:
+                print(f"IMAGE SAVE IGNORED: {img_e}")
+
+            category = request.form.get('category','General')
+            location = request.form.get('location') or request.form.get('ward') or 'Kiharu'
+            description = request.form.get('description','')
+            
+            db = get_db(); cur=get_cursor(db)
+            cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
+                       (session['user_id'], category, location, description, image_path))
+            db.commit()
+            if IS_POSTGRES: cur.close(); db.close()
+            flash("Request submitted successfully!", "success")
+            return redirect(url_for('citizen_dashboard'))
+        except Exception as e:
+            traceback.print_exc()
+            flash(f"Error submitting: {e}", "danger")
+            return redirect(url_for('citizen_dashboard'))
     try: return render_template('new_request.html')
     except: return render_template('submit_request.html')
 
