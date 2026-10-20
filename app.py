@@ -441,6 +441,16 @@ def admin_dashboard():
 def admin_request_detail(request_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
+    import sqlite3
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    req = conn.execute('SELECT * FROM requests WHERE id = ?', (request_id,)).fetchone()
+    conn.close()
+    if not req:
+        flash('Request not found','danger')
+        return redirect('/admin')
+    return render_template('admin_request_detail.html', r=req,
+                          developer_name='soloh_kim', copyright_year=2026)
     
     import sqlite3
 conn = sqlite3.connect('database.db')
