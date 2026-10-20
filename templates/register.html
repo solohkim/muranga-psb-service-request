@@ -25,17 +25,13 @@ body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidde
 <body>
 
 <div class="bg-slider">
-  <div class="bg-slider">
-  <div class="bg-slide active" style="background-image:url('/static/images/muranga1.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga2.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga3.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga4.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga5.jpg')"></div>
+  <div class="bg-slide active" style="background-image:url('{{ url_for('static', filename='images/muranga1.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga2.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga3.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga4.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga5.jpg') }}')"></div>
 </div>
 <div class="bg-overlay"></div>
-
-<div class="location-badge" id="locationBadge"><i class="bi bi-geo-alt-fill"></i> <span id="locationText">Murang'a Tea Farms - Kangema</span></div>
-<div class="dots" id="dots"></div>
 
 <div class="container-fluid"><div class="row g-0">
 <div class="col-lg-6 left d-none d-lg-flex">
@@ -124,8 +120,6 @@ document.getElementById('regForm').addEventListener('submit', function(e){
   if(!/^\d{7,8}$/.test(id)){ alert('ID must be 7 or 8 digits only'); e.preventDefault(); return; }
   if(document.getElementById('password').value !== document.getElementById('confirm_password').value){ alert('Passwords do not match'); e.preventDefault(); return; }
 });
-
-// SLIDER
 const slides = document.querySelectorAll('.bg-slide');
 let current = 0;
 function goToSlide(n){
