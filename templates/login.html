@@ -27,15 +27,13 @@ body{margin:0;font-family:'Segoe UI',system-ui;overflow-x:hidden;min-height:100v
 
 <!-- ROTATING MURANG'A BACKGROUND -->
 <div class="bg-slider">
-  <div class="bg-slide active" style="background-image:url('/static/images/muranga1.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga2.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga3.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga4.jpg')"></div>
-  <div class="bg-slide" style="background-image:url('/static/images/muranga5.jpg')"></div>
+  <div class="bg-slide active" style="background-image:url('{{ url_for('static', filename='images/muranga1.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga2.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga3.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga4.jpg') }}')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga5.jpg') }}')"></div>
 </div>
 <div class="bg-overlay"></div>
-
-
 
 <div class="container-fluid"><div class="row g-0">
 <!-- LEFT - YOUR DESIGN FROM SCREENSHOT -->
