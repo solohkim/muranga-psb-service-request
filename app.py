@@ -257,7 +257,6 @@ def citizen_dashboard():
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats, has_duplicates=has_duplicates, duplicate_count=duplicate_count, duplicate_ids=duplicate_ids)
 
-# === NEW: PROFILE UPDATE - CRUCIAL FIX ===
 @app.route('/profile', methods=['GET','POST'])
 def profile():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -441,28 +440,17 @@ def admin_dashboard():
 def admin_request_detail(request_id):
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect('/login')
-    import sqlite3
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    req = conn.execute('SELECT * FROM requests WHERE id = ?', (request_id,)).fetchone()
-    conn.close()
-    if not req:
-        flash('Request not found','danger')
-        return redirect('/admin')
-    return render_template('admin_request_detail.html', r=req,
-                          developer_name='soloh_kim', copyright_year=2026)
-    
-    import sqlite3
-conn = sqlite3.connect('database.db')
-conn.row_factory = sqlite3.Row
-    req = conn.execute('SELECT * FROM requests WHERE id = ?', (request_id,)).fetchone()
-    conn.close()
-    
+    db = get_db()
+    cur = get_cursor(db)
+    cur.execute(q("SELECT r.*, u.full_name, u.phone, u.email FROM requests r LEFT JOIN users u ON r.user_id = u.id WHERE r.id = ?"), (request_id,))
+    req = cur.fetchone()
+    if IS_POSTGRES:
+        cur.close()
+        db.close()
     if not req:
         flash('Request not found', 'danger')
         return redirect('/admin')
-        
-    return render_template('admin_request_detail.html', r=req, developer_name="soloh_kim", copyright_year=2026)
+    return render_template('admin_request_detail.html', r=req, developer_name='soloh_kim', copyright_year=2026)
 
 @app.route('/admin/update/<int:req_id>', methods=['POST'])
 def update_request(req_id):
