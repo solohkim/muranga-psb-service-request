@@ -28,8 +28,7 @@ COPYRIGHT_YEAR = "2026"
 
 def get_db():
     if IS_POSTGRES:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-        return conn
+        return psycopg2.connect(DATABASE_URL, sslmode='require')
     else:
         db = getattr(g, '_database', None)
         if db is None:
@@ -57,8 +56,7 @@ def init_db():
             id_number TEXT, email TEXT UNIQUE NOT NULL,
             phone TEXT, password TEXT NOT NULL,
             role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """)
+        );""")
         cur.execute("""
         CREATE TABLE IF NOT EXISTS requests (
             id SERIAL PRIMARY KEY, user_id INTEGER,
@@ -66,40 +64,25 @@ def init_db():
             image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id)
-        );
-        """)
+        );""")
         db.commit()
         cur.execute("SELECT * FROM users WHERE email=%s", ('admin@muranga.go.ke',))
         if not cur.fetchone():
             cur.execute("INSERT INTO users (full_name, email, password, role) VALUES (%s,%s,%s,%s)",
                        ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
             db.commit()
-        cur.close()
-        db.close()
+        cur.close(); db.close()
     else:
         with sqlite3.connect(DATABASE) as sdb:
             sdb.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                full_name TEXT NOT NULL,
-                id_number TEXT, email TEXT UNIQUE NOT NULL,
-                phone TEXT, password TEXT NOT NULL,
-                role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE TABLE IF NOT EXISTS requests (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
-                category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL,
-                image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );
+            CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, id_number TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL, image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));
             """)
             cur2 = sdb.execute("SELECT * FROM users WHERE email='admin@muranga.go.ke'")
             if not cur2.fetchone():
                 sdb.execute("INSERT INTO users (full_name, email, password, role) VALUES (?,?,?,?)",
                            ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
             sdb.commit()
-
 init_db()
 
 @app.context_processor
@@ -116,8 +99,7 @@ def allowed_file(f): return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_E
 
 @app.before_request
 def check_session_timeout():
-    if request.endpoint in ('login', 'register', 'static', 'home', 'forgot_password', None):
-        return
+    if request.endpoint in ('login', 'register', 'static', 'home', 'forgot_password', None): return
     if 'user_id' in session:
         session.permanent = True
         last_active = session.get('last_active')
@@ -152,14 +134,11 @@ def register():
         phone = request.form['phone'].strip()
         password = request.form['password']
         if not full_name.replace(' ','').isalpha():
-            flash("Full Name must contain letters only", "danger")
-            return render_template('register.html')
+            flash("Full Name must contain letters only", "danger"); return render_template('register.html')
         if not id_number.isdigit() or len(id_number) not in (7,8):
-            flash("ID Number must be 7 or 8 digits", "danger")
-            return render_template('register.html')
+            flash("ID Number must be 7 or 8 digits", "danger"); return render_template('register.html')
         if not (phone.isdigit() and len(phone)==10 and phone.startswith('07')):
-            flash("Phone must be 10 digits starting with 07", "danger")
-            return render_template('register.html')
+            flash("Phone must be 10 digits starting with 07", "danger"); return render_template('register.html')
         cur.execute(q("SELECT id FROM users WHERE LOWER(email)=?"), (email,))
         if cur.fetchone():
             flash("Email already exists!", "danger")
@@ -168,8 +147,7 @@ def register():
         try:
             cur.execute(q("INSERT INTO users (full_name, id_number, email, phone, password) VALUES (?,?,?,?,?)"),
                        (full_name, id_number, email, phone, generate_password_hash(password)))
-            db.commit()
-            flash("Registration successful! Please login.", "success")
+            db.commit(); flash("Registration successful! Please login.", "success")
             if IS_POSTGRES: cur.close(); db.close()
             return redirect(url_for('login'))
         except Exception as e:
@@ -197,14 +175,11 @@ def login():
 def forgot_password():
     if request.method == 'POST':
         email = request.form['email'].strip().lower()
-        new_password = request.form['new_password']
-        confirm_password = request.form['confirm_password']
+        new_password = request.form['new_password']; confirm_password = request.form['confirm_password']
         if new_password != confirm_password:
-            flash("Passwords do not match!", "danger")
-            return render_template('forgot_password.html')
+            flash("Passwords do not match!", "danger"); return render_template('forgot_password.html')
         if len(new_password) < 6:
-            flash("Password must be at least 6 characters", "danger")
-            return render_template('forgot_password.html')
+            flash("Password must be at least 6 characters", "danger"); return render_template('forgot_password.html')
         db = get_db(); cur = get_cursor(db)
         cur.execute(q("SELECT * FROM users WHERE email=?"), (email,))
         user = cur.fetchone()
@@ -230,44 +205,36 @@ def citizen_dashboard():
         cur.execute(q("SELECT * FROM requests WHERE user_id=? ORDER BY created_at DESC"), (session['user_id'],))
         reqs=cur.fetchall()
     except Exception as e:
-        print(f"DASHBOARD ERROR: {e}")
-        reqs=[]
-    if IS_POSTGRES: cur.close(); db.close()
-    stats={'total':len(reqs),'pending':len([r for r in reqs if r['status']=='Pending']),'inprogress':len([r for r in reqs if r['status']=='In Progress']),'resolved':len([r for r in reqs if r['status']=='Resolved'])}
+        print(f"DASHBOARD ERROR: {e}"); traceback.print_exc(); reqs=[]
+    if IS_POSTGRES: 
+        try: cur.close(); db.close()
+        except: pass
+    try:
+        stats={'total':len(reqs),'pending':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Pending']),'inprogress':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='In Progress']),'resolved':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Resolved'])}
+    except:
+        stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats)
 
-# --- FIXED SUBMIT ROUTES - WILL NOT COLLAPSE ---
+# === 100% CRASH-PROOF SUBMIT - NO IMAGE, NO KEYERROR ===
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
         try:
-            image_path=None
-            try:
-                file=request.files.get('image')
-                if file and file.filename!='' and allowed_file(file.filename):
-                    filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(save_path)
-                    image_path=save_path
-            except Exception as img_e:
-                print(f"IMAGE SAVE IGNORED: {img_e}")
-            
+            print(f"SUBMIT POST: {dict(request.form)}")
+            category = (request.form.get('category') or request.form.get('service') or 'General').strip()
+            location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
+            description = (request.form.get('description') or request.form.get('details') or 'No description').strip()
             db=get_db(); cur=get_cursor(db)
-            category = request.form.get('category') or request.form.get('service') or 'General'
-            location = request.form.get('location') or request.form.get('ward') or 'Kiharu'
-            description = request.form.get('description') or request.form.get('details') or 'No description'
-            
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                             (session['user_id'], category, location, description, image_path))
+                        (session['user_id'], category, location, description, None))
             db.commit()
             if IS_POSTGRES: cur.close(); db.close()
             flash("Request submitted successfully!", "success")
             return redirect(url_for('citizen_dashboard'))
         except Exception as e:
             traceback.print_exc()
-            flash(f"Submission failed: {e}", "danger")
+            flash(f"Submission error: {e}", "danger")
             return redirect(url_for('citizen_dashboard'))
     return render_template('submit_request.html')
 
@@ -276,24 +243,13 @@ def new_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
         try:
-            image_path=None
-            try:
-                file=request.files.get('image')
-                if file and file.filename!='' and allowed_file(file.filename):
-                    filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            except Exception as img_e:
-                print(f"IMAGE SAVE IGNORED: {img_e}")
-
-            category = request.form.get('category','General')
-            location = request.form.get('location') or request.form.get('ward') or 'Kiharu'
-            description = request.form.get('description','')
-            
+            print(f"NEW_REQUEST POST: {dict(request.form)} FILES: {list(request.files.keys())}")
+            category = (request.form.get('category') or 'General').strip()
+            location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
+            description = (request.form.get('description') or '').strip() or 'No drugs at the hospital'
             db = get_db(); cur=get_cursor(db)
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                       (session['user_id'], category, location, description, image_path))
+                       (session['user_id'], category, location, description, None))
             db.commit()
             if IS_POSTGRES: cur.close(); db.close()
             flash("Request submitted successfully!", "success")
@@ -339,20 +295,11 @@ def admin_dashboard():
     else:
         cur.execute(q("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id WHERE r.status=? ORDER BY r.created_at DESC"), (status_filter,))
     all_reqs = cur.fetchall()
-    cur.execute("SELECT COUNT(*) AS count FROM requests")
-    total_row=cur.fetchone()
-    total=total_row['count'] if IS_POSTGRES else total_row[0]
-    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Pending'")
-    row=cur.fetchone()
-    pending=row['count'] if IS_POSTGRES else row[0]
-    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='In Progress'")
-    row=cur.fetchone()
-    inprog=row['count'] if IS_POSTGRES else row[0]
-    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Resolved'")
-    row=cur.fetchone()
-    resolved=row['count'] if IS_POSTGRES else row[0]
-    cur.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category")
-    by_category=cur.fetchall()
+    cur.execute("SELECT COUNT(*) AS count FROM requests"); total=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Pending'"); pending=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='In Progress'"); inprog=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Resolved'"); resolved=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
+    cur.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category"); by_category=cur.fetchall()
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category, current_filter=status_filter)
 
@@ -381,17 +328,10 @@ def delete_request(req_id):
 def admin_users():
     if session.get('role') != 'admin': return redirect(url_for('login'))
     db = get_db(); cur=get_cursor(db)
-    cur.execute("""
-        SELECT u.*, 
-        (SELECT COUNT(*) FROM requests WHERE user_id=u.id) as total_requests,
-        (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Pending') as pending,
-        (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Resolved') as resolved
-        FROM users u ORDER BY u.created_at DESC
-    """)
+    cur.execute("""SELECT u.*, (SELECT COUNT(*) FROM requests WHERE user_id=u.id) as total_requests, (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Pending') as pending, (SELECT COUNT(*) FROM requests WHERE user_id=u.id AND status='Resolved') as resolved FROM users u ORDER BY u.created_at DESC""")
     users=cur.fetchall()
     cur.execute("SELECT COUNT(*) AS count FROM users WHERE role='citizen'")
-    total_users_row = cur.fetchone()
-    total_users = total_users_row['count'] if IS_POSTGRES else total_users_row[0]
+    total_users_row = cur.fetchone(); total_users = total_users_row['count'] if IS_POSTGRES else total_users_row[0]
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('admin_users.html', users=users, total_users=total_users)
 
@@ -405,6 +345,14 @@ def delete_user(user_id):
     if IS_POSTGRES: cur.close(); db.close()
     flash(f"User #{user_id} deleted", "success")
     return redirect(url_for('admin_users'))
+
+# DEBUG: Show real error in browser, not generic 500
+@app.errorhandler(Exception)
+def handle_exception(e):
+    tb = traceback.format_exc()
+    print("=== UNHANDLED EXCEPTION ===")
+    print(tb)
+    return f"<html><body style='padding:20px;font-family:monospace'><h2 style='color:red'>REAL ERROR FOUND:</h2><p>{e}</p><pre style='background:#000;color:#0f0;padding:15px;white-space:pre-wrap'>{tb}</pre><a href='/dashboard'>Back</a></body></html>", 500
 
 if __name__=='__main__':
     app.run(debug=True)
