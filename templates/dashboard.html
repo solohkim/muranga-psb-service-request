@@ -17,6 +17,9 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 .btn-new:hover{background:#083d1a;color:var(--gold)}
 .btn-edit{background:#FFD54F;color:#0a5c26;border-radius:8px;font-weight:600;padding:4px 12px;font-size:.8rem;border:1px solid #e6c200}
 .btn-edit:hover{background:#e6c200;color:#000}
+.btn-del{background:#fff;color:#dc3545;border-radius:8px;font-weight:600;padding:4px 12px;font-size:.8rem;border:1px solid #f5c2c7}
+.btn-del:hover{background:#dc3545;color:#fff}
+.dup-banner{background:#fff3cd;border:1px solid #ffe69c;border-radius:12px;padding:12px 16px}
 </style></head>
 <body>
 
@@ -51,6 +54,16 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 <a href="/new_request" class="btn btn-new"><i class="bi bi-plus-lg"></i> New Request</a>
 </div>
 
+<!-- DUPLICATE BANNER - AUTO SHOW IF >1 SAME REQUEST -->
+{% if requests and requests|length > 1 %}
+<div class="dup-banner d-flex justify-content-between align-items-center mb-3">
+<div><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i><b>Duplicate detected:</b> You have {{ requests|length }} requests with similar content. Clean up to remain with one.</div>
+<form method="POST" action="/citizen/cleanup-duplicates" onsubmit="return confirm('This will keep only the newest request for each unique Category+Location+Description and delete the rest. Continue?')">
+<button type="submit" class="btn btn-sm" style="background:#856404;color:#fff;border-radius:8px;white-space:nowrap"><i class="bi bi-trash3"></i> Delete Duplicates</button>
+</form>
+</div>
+{% endif %}
+
 {% if requests %}
 {% for req in requests %}
 <div class="req-card mb-3">
@@ -73,6 +86,11 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 <div class="ms-auto d-flex gap-2">
 {% if req['status'] == 'Pending' %}
 <a href="/citizen/request/{{ req['id'] }}/edit" class="btn btn-edit"><i class="bi bi-pencil-square"></i> Edit</a>
+<form method="POST" action="/citizen/request/{{ req['id'] }}/delete" onsubmit="return confirm('Delete request #{{ req['id'] }} - {{ req['category'] }} in {{ req['location'] }}?');" style="display:inline">
+<button type="submit" class="btn btn-del"><i class="bi bi-trash"></i> Delete</button>
+</form>
+{% else %}
+<span class="badge bg-light border text-muted" style="font-size:.70rem">Cannot delete - {{ req['status'] }}</span>
 {% endif %}
 </div>
 </div>

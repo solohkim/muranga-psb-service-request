@@ -215,17 +215,25 @@ def citizen_dashboard():
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats)
 
-# === 100% CRASH-PROOF SUBMIT - NO IMAGE, NO KEYERROR ===
+# === 100% CRASH-PROOF SUBMIT ===
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
         try:
-            print(f"SUBMIT POST: {dict(request.form)}")
             category = (request.form.get('category') or request.form.get('service') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or request.form.get('details') or 'No description').strip()
             db=get_db(); cur=get_cursor(db)
+            # anti-duplicate check
+            if IS_POSTGRES:
+                cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
+            else:
+                cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > datetime('now','-60 seconds')"), (session['user_id'], category, location, description))
+            if cur.fetchone():
+                flash("Duplicate ignored - you just submitted this", "warning")
+                if IS_POSTGRES: cur.close(); db.close()
+                return redirect(url_for('citizen_dashboard'))
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
                         (session['user_id'], category, location, description, None))
             db.commit()
@@ -243,11 +251,18 @@ def new_request():
     if 'user_id' not in session: return redirect(url_for('login'))
     if request.method == 'POST':
         try:
-            print(f"NEW_REQUEST POST: {dict(request.form)} FILES: {list(request.files.keys())}")
             category = (request.form.get('category') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or '').strip() or 'No drugs at the hospital'
             db = get_db(); cur=get_cursor(db)
+            if IS_POSTGRES:
+                cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
+            else:
+                cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > datetime('now','-60 seconds')"), (session['user_id'], category, location, description))
+            if cur.fetchone():
+                flash("Duplicate ignored - you just submitted this", "warning")
+                if IS_POSTGRES: cur.close(); db.close()
+                return redirect(url_for('citizen_dashboard'))
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
                        (session['user_id'], category, location, description, None))
             db.commit()
@@ -284,6 +299,49 @@ def edit_citizen_request(req_id):
         return redirect(url_for('citizen_dashboard'))
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('edit_request.html', req=req)
+
+# === NEW: Citizen can delete own duplicate ===
+@app.route('/citizen/request/<int:req_id>/delete', methods=['POST'])
+def delete_citizen_request(req_id):
+    if 'user_id' not in session: return redirect(url_for('login'))
+    db = get_db(); cur=get_cursor(db)
+    cur.execute(q("SELECT id FROM requests WHERE id=? AND user_id=?"), (req_id, session['user_id']))
+    if not cur.fetchone():
+        flash("Request not found or not yours", "danger")
+    else:
+        cur.execute(q("DELETE FROM requests WHERE id=? AND user_id=?"), (req_id, session['user_id']))
+        db.commit()
+        flash(f"Request #{req_id} deleted", "success")
+    if IS_POSTGRES:
+        try: cur.close(); db.close()
+        except: pass
+    return redirect(url_for('citizen_dashboard'))
+
+@app.route('/citizen/cleanup-duplicates', methods=['POST'])
+def cleanup_my_duplicates():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    db=get_db(); cur=get_cursor(db)
+    cur.execute(q("SELECT id, category, location, description, created_at FROM requests WHERE user_id=? ORDER BY created_at DESC"), (session['user_id'],))
+    all_reqs = cur.fetchall()
+    seen = set()
+    to_delete = []
+    for r in all_reqs:
+        key = (r['category'].strip().lower(), r['location'].strip().lower(), r['description'].strip().lower())
+        if key in seen:
+            to_delete.append(r['id'])
+        else:
+            seen.add(key)
+    if to_delete:
+        for del_id in to_delete:
+            cur.execute(q("DELETE FROM requests WHERE id=? AND user_id=?"), (del_id, session['user_id']))
+        db.commit()
+        flash(f"Cleaned {len(to_delete)} duplicate(s) - kept {len(seen)} unique", "success")
+    else:
+        flash("No duplicates found - all unique", "info")
+    if IS_POSTGRES:
+        try: cur.close(); db.close()
+        except: pass
+    return redirect(url_for('citizen_dashboard'))
 
 @app.route('/admin')
 def admin_dashboard():
@@ -346,13 +404,13 @@ def delete_user(user_id):
     flash(f"User #{user_id} deleted", "success")
     return redirect(url_for('admin_users'))
 
-# DEBUG: Show real error in browser, not generic 500
+# Error revealer for debugging (remove in production)
 @app.errorhandler(Exception)
 def handle_exception(e):
     tb = traceback.format_exc()
     print("=== UNHANDLED EXCEPTION ===")
     print(tb)
-    return f"<html><body style='padding:20px;font-family:monospace'><h2 style='color:red'>REAL ERROR FOUND:</h2><p>{e}</p><pre style='background:#000;color:#0f0;padding:15px;white-space:pre-wrap'>{tb}</pre><a href='/dashboard'>Back</a></body></html>", 500
+    return f"<html><body style='padding:20px;font-family:monospace'><h2 style='color:red'>REAL ERROR:</h2><p>{e}</p><pre style='background:#000;color:#0f0;padding:15px;white-space:pre-wrap'>{tb}</pre><a href='/dashboard'>Back</a></body></html>", 500
 
 if __name__=='__main__':
     app.run(debug=True)
