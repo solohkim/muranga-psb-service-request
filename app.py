@@ -17,7 +17,8 @@ else:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "muranga-psb-2026-secret")
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+BASE_UPLOAD = '/tmp/uploads' if os.environ.get('RENDER') else 'static/uploads'
+app.config['UPLOAD_FOLDER'] = BASE_UPLOAD
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
@@ -41,7 +42,6 @@ def get_cursor(db):
     return db.cursor()
 
 def q(sql):
-    # auto convert ? -> %s for postgres
     return sql.replace("?", "%s") if IS_POSTGRES else sql
 
 def init_db():
@@ -157,11 +157,11 @@ def register():
             flash("ID Number must be 7 or 8 digits", "danger")
             return render_template('register.html')
         if not (phone.isdigit() and len(phone)==10 and phone.startswith('07')):
-            flash("Phone must be 10 digits starting with 07 (e.g. 0712345678)", "danger")
+            flash("Phone must be 10 digits starting with 07", "danger")
             return render_template('register.html')
         cur.execute(q("SELECT id FROM users WHERE LOWER(email)=?"), (email,))
         if cur.fetchone():
-            flash("Email already exists! This email is already registered. Please login or use Forgot Password.", "danger")
+            flash("Email already exists!", "danger")
             if IS_POSTGRES: cur.close(); db.close()
             return render_template('register.html')
         try:
@@ -172,7 +172,7 @@ def register():
             if IS_POSTGRES: cur.close(); db.close()
             return redirect(url_for('login'))
         except Exception as e:
-            db.rollback() if IS_POSTGRES else None
+            if IS_POSTGRES: db.rollback()
             flash(f"Error: {str(e)}", "danger")
             if IS_POSTGRES: cur.close(); db.close()
             return render_template('register.html')
@@ -214,7 +214,7 @@ def forgot_password():
         cur.execute(q("UPDATE users SET password=? WHERE email=?"), (generate_password_hash(new_password), email))
         db.commit()
         if IS_POSTGRES: cur.close(); db.close()
-        flash("Password reset successful! Please login with new password.", "success")
+        flash("Password reset successful!", "success")
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
@@ -225,8 +225,12 @@ def logout(): session.clear(); return redirect(url_for('login'))
 def citizen_dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
     db=get_db(); cur=get_cursor(db)
-    cur.execute(q("SELECT * FROM requests WHERE user_id=? ORDER BY created_at DESC"), (session['user_id'],))
-    reqs=cur.fetchall()
+    try:
+        cur.execute(q("SELECT * FROM requests WHERE user_id=? ORDER BY created_at DESC"), (session['user_id'],))
+        reqs=cur.fetchall()
+    except Exception as e:
+        print(f"DASHBOARD ERROR: {e}")
+        reqs=[]
     if IS_POSTGRES: cur.close(); db.close()
     stats={'total':len(reqs),'pending':len([r for r in reqs if r['status']=='Pending']),'inprogress':len([r for r in reqs if r['status']=='In Progress']),'resolved':len([r for r in reqs if r['status']=='Resolved'])}
     return render_template('dashboard.html', requests=reqs, stats=stats)
@@ -241,7 +245,7 @@ def submit_request():
             filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path=f"static/uploads/{filename}"
+            image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
         db=get_db(); cur=get_cursor(db)
         cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
                          (session['user_id'], request.form['category'], request.form['location'], request.form['description'], image_path))
@@ -261,7 +265,7 @@ def new_request():
             filename=secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path=f"static/uploads/{filename}"
+            image_path=os.path.join(app.config['UPLOAD_FOLDER'], filename)
         category = request.form.get('category','General')
         location = request.form.get('location', request.form.get('ward','Kiharu'))
         description = request.form.get('description','')
@@ -277,58 +281,50 @@ def new_request():
 
 @app.route('/citizen/request/<int:req_id>/edit', methods=['GET','POST'])
 def edit_citizen_request(req_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    if 'user_id' not in session: return redirect(url_for('login'))
     db = get_db(); cur=get_cursor(db)
-    try:
-        cur.execute(q("SELECT * FROM requests WHERE id=? AND user_id=?"), (req_id, session['user_id']))
-        req = cur.fetchone()
-        if not req:
-            flash("Request not found or not allowed", "danger")
-            if IS_POSTGRES: cur.close(); db.close()
-            return redirect(url_for('citizen_dashboard'))
-        if req['status'] != 'Pending' and request.method == 'GET':
-            flash("Only Pending requests can be edited", "warning")
-            if IS_POSTGRES: cur.close(); db.close()
-            return redirect(url_for('citizen_dashboard'))
-        if request.method == 'POST':
-            category = request.form.get('category', req['category'])
-            location = request.form.get('location', req['location'])
-            description = request.form.get('description', req['description'])
-            cur.execute(q("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?"),
-                       (category, location, description, req_id, session['user_id']))
-            db.commit()
-            if IS_POSTGRES: cur.close(); db.close()
-            flash("Request updated successfully!", "success")
-            return redirect(url_for('citizen_dashboard'))
+    cur.execute(q("SELECT * FROM requests WHERE id=? AND user_id=?"), (req_id, session['user_id']))
+    req = cur.fetchone()
+    if not req:
+        flash("Request not found", "danger")
         if IS_POSTGRES: cur.close(); db.close()
-        return render_template('edit_request.html', req=req)
-    except Exception as e:
-        print(f"EDIT ERROR: {e}")
-        flash(f"Error loading edit page: {e}", "danger")
         return redirect(url_for('citizen_dashboard'))
+    if req['status'] != 'Pending' and request.method == 'GET':
+        flash("Only Pending requests can be edited", "warning")
+        if IS_POSTGRES: cur.close(); db.close()
+        return redirect(url_for('citizen_dashboard'))
+    if request.method == 'POST':
+        cur.execute(q("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?"),
+                   (request.form.get('category', req['category']), request.form.get('location', req['location']), request.form.get('description', req['description']), req_id, session['user_id']))
+        db.commit()
+        if IS_POSTGRES: cur.close(); db.close()
+        flash("Request updated!", "success")
+        return redirect(url_for('citizen_dashboard'))
+    if IS_POSTGRES: cur.close(); db.close()
+    return render_template('edit_request.html', req=req)
 
 @app.route('/admin')
 def admin_dashboard():
-    if session.get('role')!='admin': 
-        return redirect(url_for('login'))
+    if session.get('role')!='admin': return redirect(url_for('login'))
     db=get_db(); cur=get_cursor(db)
     status_filter = request.args.get('status', 'All')
-    
     if status_filter == 'All' or not status_filter:
         cur.execute("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id ORDER BY r.created_at DESC")
     else:
         cur.execute(q("SELECT r.*, u.full_name, u.phone FROM requests r LEFT JOIN users u ON r.user_id=u.id WHERE r.status=? ORDER BY r.created_at DESC"), (status_filter,))
     all_reqs = cur.fetchall()
-
-    cur.execute("SELECT COUNT(*) FROM requests")
-    total=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM requests WHERE status='Pending'")
-    pending=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM requests WHERE status='In Progress'")
-    inprog=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM requests WHERE status='Resolved'")
-    resolved=cur.fetchone()['count'] if IS_POSTGRES else cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests")
+    total_row=cur.fetchone()
+    total=total_row['count'] if IS_POSTGRES else total_row[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Pending'")
+    row=cur.fetchone()
+    pending=row['count'] if IS_POSTGRES else row[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='In Progress'")
+    row=cur.fetchone()
+    inprog=row['count'] if IS_POSTGRES else row[0]
+    cur.execute("SELECT COUNT(*) AS count FROM requests WHERE status='Resolved'")
+    row=cur.fetchone()
+    resolved=row['count'] if IS_POSTGRES else row[0]
     cur.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category")
     by_category=cur.fetchall()
     if IS_POSTGRES: cur.close(); db.close()
@@ -347,19 +343,17 @@ def update_request(req_id):
 
 @app.route('/admin/request/<int:req_id>/delete', methods=['POST'])
 def delete_request(req_id):
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if session.get('role') != 'admin': return redirect(url_for('login'))
     db = get_db(); cur=get_cursor(db)
     cur.execute(q("DELETE FROM requests WHERE id=?"), (req_id,))
     db.commit()
     if IS_POSTGRES: cur.close(); db.close()
-    flash(f"Request #{req_id} deleted by admin", "success")
+    flash(f"Request #{req_id} deleted", "success")
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/users')
 def admin_users():
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if session.get('role') != 'admin': return redirect(url_for('login'))
     db = get_db(); cur=get_cursor(db)
     cur.execute("""
         SELECT u.*, 
@@ -369,7 +363,7 @@ def admin_users():
         FROM users u ORDER BY u.created_at DESC
     """)
     users=cur.fetchall()
-    cur.execute("SELECT COUNT(*) FROM users WHERE role='citizen'")
+    cur.execute("SELECT COUNT(*) AS count FROM users WHERE role='citizen'")
     total_users_row = cur.fetchone()
     total_users = total_users_row['count'] if IS_POSTGRES else total_users_row[0]
     if IS_POSTGRES: cur.close(); db.close()
@@ -377,14 +371,13 @@ def admin_users():
 
 @app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
 def delete_user(user_id):
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
+    if session.get('role') != 'admin': return redirect(url_for('login'))
     db = get_db(); cur=get_cursor(db)
     cur.execute(q("DELETE FROM requests WHERE user_id=?"), (user_id,))
     cur.execute(q("DELETE FROM users WHERE id=? AND role='citizen'"), (user_id,))
     db.commit()
     if IS_POSTGRES: cur.close(); db.close()
-    flash(f"User #{user_id} and all their requests deleted (ODPC compliant)", "success")
+    flash(f"User #{user_id} deleted", "success")
     return redirect(url_for('admin_users'))
 
 if __name__=='__main__':
