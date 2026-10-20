@@ -70,14 +70,14 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-<thead style="background:#f6f9f6"><tr class="small text-muted"><th style="width:60px">ID</th><th>Citizen</th><th>Category</th><th>Location</th><th>Status</th><th>Evidence</th><th style="width:300px">Action</th></tr></thead>
+<thead style="background:#f6f9f6"><tr class="small text-muted"><th style="width:60px">ID</th><th>Citizen</th><th>Category</th><th>Location</th><th style="min-width:320px;">Description</th><th>Status</th><th>Evidence</th><th style="width:300px">Action</th></tr></thead>
 <tbody>
 {% for r in requests %}
 <tr>
 <td class="fw-bold">#{{ r['id'] }}</td>
 <td><div class="d-flex align-items-center gap-2"><div style="width:30px;height:30px;background:#e6f4ea;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0a5c26;font-weight:700">{{ r['full_name'][0] if r['full_name'] else 'C' }}</div><div><div class="fw-semibold small">{{ r['full_name'] }}</div><small class="text-muted" style="font-size:.70rem">{{ r['phone'] }}</small></div></div></td>
 <td><span class="badge rounded-pill" style="background:#e6f4ea;color:#0a5c26;border:1px solid #c3e6cb"><i class="bi bi-tag"></i> {{ r['category'] }}</span></td>
-<td><span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> {{ r['location'] }}</span></td>
+<td style="max-width:350px; font-size:13px; white-space:normal;">{{ r['description'] }}</td>
 <td>{% if r['status']=='Pending' %}<span class="badge badge-pending"><i class="bi bi-hourglass"></i> Pending</span>{% elif r['status']=='In Progress' %}<span class="badge badge-progress"><i class="bi bi-gear"></i> In Progress</span>{% else %}<span class="badge badge-resolved"><i class="bi bi-check2"></i> Resolved</span>{% endif %}</td>
 <td style="text-align:center; width:110px">
   {% if r['image_path'] %}
@@ -110,7 +110,7 @@ body{background:var(--light);font-family:'Segoe UI',system-ui}
 </td>
 </tr>
 {% else %}
-<tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>No {{ current_filter }} requests found</td></tr>
+<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>No {{ current_filter }} requests found</td></tr>
 {% endfor %}
 </tbody>
 </table>
