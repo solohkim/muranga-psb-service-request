@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<title>Profile - Murang'a PSB</title>
+<style>body{background:#f6f9f6;font-family:'Segoe UI'} .card-m{background:#fff;border:1px solid #e8eee8;border-radius:20px;padding:28px;box-shadow:0 12px 30px rgba(0,0,0,.06)}</style>
+</head><body>
+<div class="container py-4" style="max-width:600px">
+<a href="/dashboard" class="small fw-bold text-decoration-none mb-3 d-inline-block" style="color:#0a5c26"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+<div class="card-m">
+<h5 class="fw-bold mb-3"><i class="bi bi-person-circle text-success"></i> My Profile</h5>
+{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}{% for c,m in messages %}<div class="alert alert-{{c}}">{{m}}</div>{% endfor %}{% endif %}{% endwith %}
+<form method="POST">
+<div class="mb-3"><label class="fw-bold small">Full Name</label><input name="full_name" class="form-control" value="{{user['full_name']}}" required></div>
+<div class="mb-3"><label class="fw-bold small">ID Number (cannot change)</label><input class="form-control" value="{{user['id_number']}}" disabled></div>
+<div class="mb-3"><label class="fw-bold small">Phone Number</label><input name="phone" class="form-control" value="{{user['phone']}}" pattern="07[0-9]{8}" required><small class="text-muted">Format: 07XXXXXXXX - update when you change line</small></div>
+<div class="mb-3"><label class="fw-bold small">Email</label><input name="email" type="email" class="form-control" value="{{user['email']}}" required></div>
+<button class="btn w-100 mt-2" style="background:#0a5c26;color:#fff;border-radius:10px;font-weight:700">Save Profile</button>
+</form>
+</div>
+</div>
+</body></html>

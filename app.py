@@ -1,4 +1,5 @@
 import os
+import re
 import traceback
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
@@ -222,7 +223,6 @@ def forgot_password():
 @app.route('/logout')
 def logout(): session.clear(); return redirect(url_for('login'))
 
-# === FIXED DASHBOARD - SMART DUPLICATE CHECK ===
 @app.route('/dashboard')
 def citizen_dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -235,37 +235,59 @@ def citizen_dashboard():
     if IS_POSTGRES: 
         try: cur.close(); db.close()
         except: pass
-
-    # Smart duplicate detection: only same category+location+description
     seen = {}
     duplicate_count = 0
     duplicate_ids = []
     for r in reqs:
-        c = (r['category'] if isinstance(r, dict) else r[2] if len(r)>2 else str(r)) or ''
-        l = (r['location'] if isinstance(r, dict) else r[3] if len(r)>3 else '')
-        d = (r['description'] if isinstance(r, dict) else r[4] if len(r)>4 else '')
-        # dict style for RealDictRow / Row
         try:
             c = r['category']; l = r['location']; d = r['description']
         except:
-            pass
+            c = l = d = str(r)
         key = (str(c).strip().lower(), str(l).strip().lower(), str(d).strip().lower())
         if key in seen:
             duplicate_count += 1
-            try:
-                duplicate_ids.append(r['id'])
-            except:
-                pass
+            try: duplicate_ids.append(r['id'])
+            except: pass
         else:
             seen[key] = True
-
     has_duplicates = duplicate_count > 0
-
     try:
-        stats={'total':len(reqs),'pending':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Pending']),'inprogress':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='In Progress']),'resolved':len([r for r in reqs if (r['status'] if isinstance(r, dict) else r['status'])=='Resolved'])}
+        stats={'total':len(reqs),'pending':len([r for r in reqs if r['status']=='Pending']),'inprogress':len([r for r in reqs if r['status']=='In Progress']),'resolved':len([r for r in reqs if r['status']=='Resolved'])}
     except:
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats, has_duplicates=has_duplicates, duplicate_count=duplicate_count, duplicate_ids=duplicate_ids)
+
+# === NEW: PROFILE UPDATE - CRUCIAL FIX ===
+@app.route('/profile', methods=['GET','POST'])
+def profile():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    db=get_db(); cur=get_cursor(db)
+    if request.method=='POST':
+        full_name = request.form.get('full_name','').strip()
+        phone = request.form.get('phone','').strip()
+        email = request.form.get('email','').strip().lower()
+        if not re.match(r"^[A-Za-z ]+$", full_name) or len(full_name)<3:
+            flash("Full name letters only, min 3 chars","danger")
+        elif not re.match(r"^07\d{8}$", phone):
+            flash("Phone must be 07XXXXXXXX (10 digits)","danger")
+        else:
+            try:
+                cur.execute(q("UPDATE users SET full_name=?, phone=?, email=? WHERE id=?"), (full_name, phone, email, session['user_id']))
+                db.commit()
+                session['full_name']=full_name
+                flash("Profile updated successfully!","success")
+            except Exception as e:
+                if IS_POSTGRES: db.rollback()
+                err=str(e).lower()
+                if 'phone' in err: flash("Phone already used","danger")
+                elif 'email' in err: flash("Email already used","danger")
+                else: flash(f"Update failed: {e}","danger")
+    cur.execute(q("SELECT * FROM users WHERE id=?"), (session['user_id'],))
+    user=cur.fetchone()
+    if IS_POSTGRES:
+        try: cur.close(); db.close()
+        except: pass
+    return render_template('profile.html', user=user)
 
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
@@ -343,19 +365,16 @@ def edit_citizen_request(req_id):
         if IS_POSTGRES: cur.close(); db.close()
         return redirect(url_for('citizen_dashboard'))
     if request.method == 'POST':
-        # Handle new image if uploaded
-        new_image_path = req['image_path']  # keep old by default
+        new_image_path = req['image_path']
         uploaded = request.files.get('image')
         if uploaded and uploaded.filename:
             saved = save_uploaded_image(uploaded)
-            if saved:
-                new_image_path = saved
-        
+            if saved: new_image_path = saved
         cur.execute(q("UPDATE requests SET category=?, location=?, description=?, image_path=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?"),
                    (request.form.get('category', req['category']), request.form.get('location', req['location']), request.form.get('description', req['description']), new_image_path, req_id, session['user_id']))
         db.commit()
         if IS_POSTGRES: cur.close(); db.close()
-        flash("Request updated with image!" if new_image_path != req['image_path'] else "Request updated!", "success")
+        flash("Request updated!", "success")
         return redirect(url_for('citizen_dashboard'))
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('edit_request.html', req=req)
@@ -386,17 +405,15 @@ def cleanup_my_duplicates():
     to_delete = []
     for r in all_reqs:
         key = (r['category'].strip().lower(), r['location'].strip().lower(), r['description'].strip().lower())
-        if key in seen:
-            to_delete.append(r['id'])
-        else:
-            seen.add(key)
+        if key in seen: to_delete.append(r['id'])
+        else: seen.add(key)
     if to_delete:
         for del_id in to_delete:
             cur.execute(q("DELETE FROM requests WHERE id=? AND user_id=?"), (del_id, session['user_id']))
         db.commit()
-        flash(f"Cleaned {len(to_delete)} duplicate(s) - different issues kept", "success")
+        flash(f"Cleaned {len(to_delete)} duplicate(s)", "success")
     else:
-        flash("No exact duplicates found - your different issues are safe", "info")
+        flash("No exact duplicates found", "info")
     if IS_POSTGRES:
         try: cur.close(); db.close()
         except: pass
