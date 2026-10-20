@@ -1,106 +1,144 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-<title>Login - Murang'a County</title>
+<title>Login - Murang'a PSB</title>
 <style>
 :root{--green:#0a5c26;--gold:#FFD54F}
-body{margin:0;font-family:'Segoe UI',system-ui;min-height:100vh;background:url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;position:relative}
-body::before{content:'';position:fixed;inset:0;background:rgba(0,20,5,.65);z-index:0}
-.main{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.wrap{width:100%;max-width:1100px;display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center}
-@media(max-width:768px){
-  .wrap{grid-template-columns:1fr;gap:18px}
-  .left{order:2;text-align:center}
-  .left h1{font-size:2rem!important;line-height:1.2}
-  .right{order:1}
-  .info-card{display:none} /* hide extra cards on phone to save space, keep main welcome */
-  .info-card-mobile{display:flex!important}
+body{margin:0;font-family:'Segoe UI',system-ui;overflow-x:hidden;min-height:100vh;position:relative;transition:.3s}
+.bg-slider{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2}
+.bg-slide{position:absolute;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.8s ease-in-out;background-color:#0a1a0f}
+.bg-slide.active{opacity:1}
+.bg-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(90deg, rgba(0,30,10,0.92) 0%, rgba(0,0,0,0.55) 55%);transition:.3s}
+.left-side{color:#fff;padding:50px 40px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+.left-side h1{font-weight:900;font-size:3.2rem;line-height:.95;letter-spacing:-1px}
+.gold{color:var(--gold)}
+.badge-m{border:1px solid var(--gold);color:var(--gold);padding:7px 16px;border-radius:100px;font-size:.70rem;letter-spacing:1.2px;background:rgba(255,213,79,.08);display:inline-block}
+.feat{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:14px 16px;display:flex;gap:14px;margin-bottom:14px;backdrop-filter:blur(8px);transition:.3s}
+.feat:hover{background:rgba(255,255,255,.14)}
+.feat i{width:40px;height:40px;border-radius:12px;background:rgba(255,213,79,.18);color:var(--gold);display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
+.card-login{background:#fff;border-radius:22px;box-shadow:0 25px 60px rgba(0,0,0,.45);padding:0;overflow:hidden;max-width:480px;width:100%;transition:.3s}
+.avatar-box{width:100px;height:100px;border-radius:50%;margin:-50px auto 16px;background:#fff;border:4px solid var(--green);box-shadow:0 10px 25px rgba(0,0,0,.2);display:grid;place-items:center;font-size:3rem;color:var(--green);transition:.3s}
+.btn-green{background:var(--green);color:#fff;font-weight:700;padding:12px;border-radius:10px;border:0;width:100%;transition:.2s}
+.btn-green:hover{background:#083d1a;color:var(--gold);transform:translateY(-1px)}
+.form-control{padding:11px 14px;border-radius:10px;transition:.3s}
+.input-group-text{background:#fff;transition:.3s;cursor:pointer}
+#themeToggle{position:fixed;top:18px;right:18px;z-index:100;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:var(--gold);display:grid;place-items:center;font-size:1.25rem;cursor:pointer;transition:.3s}
+#themeToggle:hover{transform:scale(1.08);background:rgba(255,255,255,.25)}
+body.dark-mode .bg-overlay{background:linear-gradient(90deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.80) 55%) !important}
+body.dark-mode .card-login{background:#1a1a1a !important;color:#eee}
+body.dark-mode .card-login .text-muted{color:#999 !important}
+body.dark-mode .avatar-box{background:#1a1a1a !important;border-color:#333 !important}
+body.dark-mode .form-control{background:#262626 !important;color:#fff !important;border-color:#444 !important}
+body.dark-mode .form-control::placeholder{color:#888 !important}
+body.dark-mode .input-group-text{background:#262626 !important;color:#ccc !important;border-color:#444 !important}
+body.dark-mode .btn-green{background:#12a344 !important}
+
+/* --- MOBILE FIX --- */
+@media (max-width: 991px){
+  .bg-overlay{background:rgba(0,20,10,0.82)}
+  .mobile-wrap{min-height:auto!important;padding:16px!important;align-items:flex-start!important;padding-top:60px!important;padding-bottom:24px!important}
+  .card-login{margin-top:50px!important;width:100%!important;max-width:100%!important;border-radius:18px!important}
+  #themeToggle{top:12px;right:12px;width:38px;height:38px}
 }
-.left{color:#fff}
-.left h1{font-weight:800;font-size:3.2rem;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.5)}
-.left h1 span{color:var(--gold)}
-.badge-welcome{background:rgba(255,213,79,.15);border:1px solid var(--gold);color:var(--gold);border-radius:999px;padding:6px 14px;font-size:.7rem;font-weight:700;letter-spacing:.5px}
-.info-card{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:center;margin-top:14px}
-.info-card .ic{width:38px;height:38px;border-radius:10px;background:rgba(255,213,79,.2);display:flex;align-items:center;justify-content:center;color:var(--gold)}
-.info-card-mobile{display:none}
-.login-card{background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);padding:28px 26px 22px;position:relative}
-.avatar{width:78px;height:78px;border-radius:50%;background:#fff;border:3px solid var(--green);display:flex;align-items:center;justify-content:center;margin:-68px auto 14px;box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:2rem;color:var(--green)}
-.form-control{border-radius:10px;padding:11px 14px;border:1px solid #dde3dd}
-.form-control:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(10,92,38,.15)}
-.btn-login{background:var(--green);color:#fff;font-weight:700;border-radius:10px;padding:11px;border:0;width:100%}
-.btn-login:hover{background:#083d1a;color:var(--gold)}
-.footer-mini{background:var(--green);color:#fff;border-radius:10px;text-align:center;padding:8px;font-size:.75rem;margin-top:16px}
-</style>
-</head>
+@media (max-width: 375px){
+  .avatar-box{width:84px;height:84px;margin:-42px auto 12px;font-size:2.4rem}
+  .left-side h1{font-size:2.4rem}
+}
+</style></head>
 <body>
-<div class="main">
-<div class="wrap">
 
-<!-- LEFT - Welcome -->
-<div class="left">
-  <div class="badge-welcome mb-3"><i class="bi bi-shield-lock"></i> WELCOME TO MURANG'A COUNTY E-CITIZEN PLATFORM</div>
-  <h1>Murang'a<br>E-Service<br>Portal<span>.</span></h1>
-  <p class="mt-3 opacity-75 small" style="max-width:420px">Access County Government services securely. Verified by eCitizen, protected under Data Protection Act.</p>
-  
-  <div class="info-card">
-    <div class="ic"><i class="bi bi-people-fill"></i></div>
-    <div><div class="fw-bold small">23,000+ Citizens</div><small class="opacity-75" style="font-size:.8rem">Trust our digital services</small></div>
-  </div>
-  <div class="info-card">
-    <div class="ic"><i class="bi bi-lightning-charge-fill"></i></div>
-    <div><div class="fw-bold small">Fast Service</div><small class="opacity-75" style="font-size:.8rem">Average 2.3 days response</small></div>
-  </div>
-  <div class="info-card">
-    <div class="ic"><i class="bi bi-shield-check"></i></div>
-    <div><div class="fw-bold small">Secure Data</div><small class="opacity-75" style="font-size:.8rem">Your data is protected</small></div>
-  </div>
-  <div class="mt-3 small opacity-50">© 2026 Murang'a County PSB Developed by <span style="color:var(--gold);font-weight:700">soloh_kim</span></div>
+<div class="bg-slider">
+  <div class="bg-slide active" style="background-image:url('{{ url_for('static', filename='images/muranga1.jpg') }}'), url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga2.jpg') }}'), url('https://images.unsplash.com/photo-1476231682828-37e571bc172f?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga3.jpg') }}'), url('https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga4.jpg') }}'), url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80')"></div>
+  <div class="bg-slide" style="background-image:url('{{ url_for('static', filename='images/muranga5.jpg') }}'), url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80')"></div>
 </div>
+<div class="bg-overlay"></div>
 
-<!-- RIGHT - Login -->
-<div class="right">
-  <div class="login-card">
-    <div class="avatar"><i class="bi bi-person-fill"></i></div>
-    <h5 class="fw-bold text-center mb-1">Welcome Back</h5>
-    <p class="text-center text-muted small mb-3">Login to your eCitizen account</p>
+<button id="themeToggle" title="Toggle dark/light"><i class="bi bi-moon-fill" id="themeIcon"></i></button>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} small py-2">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <form method="POST">
-      <div class="input-group mb-3">
-        <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
-        <input name="email" type="email" class="form-control" placeholder="Email Address" required>
-      </div>
-      <div class="input-group mb-3">
-        <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
-        <input name="password" type="password" id="pwd" class="form-control" placeholder="Password" required>
-        <span class="input-group-text bg-light" onclick="document.getElementById('pwd').type=document.getElementById('pwd').type=='password'?'text':'password'" style="cursor:pointer"><i class="bi bi-eye-slash"></i></span>
-      </div>
-      <button class="btn-login"><i class="bi bi-box-arrow-in-right"></i> Login Securely</button>
-    </form>
-
-    <div class="d-flex justify-content-between mt-3 small">
-      <a href="/forgot-password" style="color:var(--green);font-weight:600;text-decoration:none">Forgot Password?</a>
-      <a href="/register" style="color:var(--green);font-weight:600;text-decoration:none">Create Account →</a>
-    </div>
-
-    <div class="text-center mt-3 small text-muted"><i class="bi bi-lock-fill"></i> Data Protected • ODPC Compliant</div>
-    <div class="footer-mini">© 2026 Murang'a PSB eService Portal • Developed by soloh_kim</div>
-  </div>
-</div>
-
+<div class="container-fluid"><div class="row g-0">
+<div class="col-lg-6 left-side d-none d-lg-flex">
+<div>
+<div class="badge-m mb-4"><i class="bi bi-shield-lock-fill"></i> WELCOME TO MURANG'A COUNTY E-CITIZEN PLATFORM </div>
+<h1>Murang'a<br>E-Service<br>Portal<span class="gold">.</span></h1>
+<p class="mt-3" style="opacity:.85;max-width:460px;font-size:1.05rem">Access County Government services securely. Verified by eCitizen, protected under Data Protection Act.</p>
+<div class="mt-4" style="max-width:460px">
+<div class="feat"><i class="bi bi-people-fill"></i><div><b>23,000+ Citizens</b><div class="small" style="opacity:.75">Trust our digital services</div></div></div>
+<div class="feat"><i class="bi bi-lightning-charge-fill"></i><div><b>Fast Service</b><div class="small" style="opacity:.75">Average 2.3 days response</div></div></div>
+<div class="feat"><i class="bi bi-shield-check"></i><div><b>Secure Data</b><div class="small" style="opacity:.75">Your data is protected</div></div></div>
 </div>
 </div>
+<small class="mt-auto" style="opacity:.6">© {{ copyright_year }} Murang'a County PSB Developed by <a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:#FFD54F;text-decoration:underline;font-weight:700;">{{ developer_name }}</a></small>
+</div>
+
+<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-3 p-lg-4 mobile-wrap" style="min-height:100vh">
+<div class="card-login p-4 p-md-5 w-100" style="max-width:480px;margin-top:40px">
+<div class="avatar-box"><i class="bi bi-person-fill" style="color:#4a2c8a"></i></div>
+<div class="text-center mb-4"><h5 class="fw-bold mb-1">Welcome Back</h5><small class="text-muted">Login to your eCitizen account</small></div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} py-2 small fw-semibold text-center" style="border-radius:10px;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<form method="POST">
+<div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-envelope"></i></span><input class="form-control" name="email" type="email" placeholder="Email Address" required></div>
+<div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-lock"></i></span><input class="form-control" name="password" id="password" type="password" placeholder="Password" required><span class="input-group-text eye-btn" id="togglePass"><i class="bi bi-eye-slash" id="eyeIcon"></i></span></div>
+<button class="btn btn-green"><i class="bi bi-box-arrow-in-right"></i> Login Securely</button>
+</form>
+
+<div class="d-flex justify-content-between mt-4 small fw-semibold">
+<a href="/forgot-password" class="text-decoration-none" style="color:var(--green)">Forgot Password?</a>
+<a href="/register" class="text-decoration-none" style="color:var(--green)">Create Account →</a>
+</div>
+
+<div class="text-center mt-4"><small class="text-muted"><i class="bi bi-lock-fill"></i> Data Protected • ODPC Compliant</small></div>
+<div style="text-align:center; padding:9px; margin-top:14px; background:var(--green); color:white; font-size:11px; border-radius:8px;">
+<a href="https://www.linkedin.com/in/soloh-kim/" target="_blank" rel="noopener noreferrer" style="color:white;text-decoration:none;display:block;width:100%;">
+© {{ copyright_year }} Murang'a PSB eService Portal • Developed by {{ developer_name }}
+</a>
+</div>
+</div>
+</div>
+</div></div>
+
+<script>
+document.getElementById('togglePass').addEventListener('click', function(){
+  const input = document.getElementById('password');
+  const icon = document.getElementById('eyeIcon');
+  input.type = input.type==='password' ? 'text' : 'password';
+  icon.classList.toggle('bi-eye'); icon.classList.toggle('bi-eye-slash');
+});
+const slides = document.querySelectorAll('.bg-slide');
+let current = 0;
+function goToSlide(n){
+  slides[current].classList.remove('active');
+  current = n % slides.length;
+  slides[current].classList.add('active');
+}
+setInterval(() => goToSlide((current+1)%slides.length), 5000);
+const themeBtn = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+if(localStorage.getItem('theme') === 'dark'){
+  document.body.classList.add('dark-mode');
+  themeIcon.classList.replace('bi-moon-fill','bi-sun-fill');
+}
+themeBtn.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  if(isDark){
+    themeIcon.classList.replace('bi-moon-fill','bi-sun-fill');
+    localStorage.setItem('theme','dark');
+  } else {
+    themeIcon.classList.replace('bi-sun-fill','bi-moon-fill');
+    localStorage.setItem('theme','light');
+  }
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</body></html>
