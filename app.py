@@ -343,11 +343,19 @@ def edit_citizen_request(req_id):
         if IS_POSTGRES: cur.close(); db.close()
         return redirect(url_for('citizen_dashboard'))
     if request.method == 'POST':
-        cur.execute(q("UPDATE requests SET category=?, location=?, description=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?"),
-                   (request.form.get('category', req['category']), request.form.get('location', req['location']), request.form.get('description', req['description']), req_id, session['user_id']))
+        # Handle new image if uploaded
+        new_image_path = req['image_path']  # keep old by default
+        uploaded = request.files.get('image')
+        if uploaded and uploaded.filename:
+            saved = save_uploaded_image(uploaded)
+            if saved:
+                new_image_path = saved
+        
+        cur.execute(q("UPDATE requests SET category=?, location=?, description=?, image_path=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?"),
+                   (request.form.get('category', req['category']), request.form.get('location', req['location']), request.form.get('description', req['description']), new_image_path, req_id, session['user_id']))
         db.commit()
         if IS_POSTGRES: cur.close(); db.close()
-        flash("Request updated!", "success")
+        flash("Request updated with image!" if new_image_path != req['image_path'] else "Request updated!", "success")
         return redirect(url_for('citizen_dashboard'))
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('edit_request.html', req=req)
