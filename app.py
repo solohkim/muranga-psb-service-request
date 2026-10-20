@@ -18,8 +18,10 @@ else:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "muranga-psb-2026-secret")
+# Fix: always use static/uploads for serving, create both folders
 BASE_UPLOAD = '/tmp/uploads' if os.environ.get('RENDER') else 'static/uploads'
 app.config['UPLOAD_FOLDER'] = BASE_UPLOAD
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 ALLOWED_EXT = {'png','jpg','jpeg'}
 DATABASE = 'database.db'
@@ -46,6 +48,7 @@ def q(sql):
 
 def init_db():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs('static/uploads', exist_ok=True)
     db = get_db()
     cur = get_cursor(db)
     if IS_POSTGRES:
@@ -95,7 +98,33 @@ def close_connection(exception):
         db = getattr(g, '_database', None)
         if db is not None: db.close()
 
-def allowed_file(f): return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
+def allowed_file(f): 
+    return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
+
+def save_uploaded_image(file):
+    """Save image and return path, or None if fails"""
+    if not file or file.filename == '':
+        return None
+    if not allowed_file(file.filename):
+        return None
+    try:
+        os.makedirs('static/uploads', exist_ok=True)
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
+        # Always save to static/uploads so Flask can serve it
+        save_path = os.path.join('static/uploads', filename)
+        file.save(save_path)
+        # Also copy to UPLOAD_FOLDER if different (Render /tmp)
+        if app.config['UPLOAD_FOLDER'] != 'static/uploads':
+            try:
+                import shutil
+                shutil.copy(save_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            except: pass
+        return f"static/uploads/{filename}"
+    except Exception as e:
+        print(f"IMAGE SAVE ERROR: {e}")
+        traceback.print_exc()
+        return None
 
 @app.before_request
 def check_session_timeout():
@@ -215,7 +244,7 @@ def citizen_dashboard():
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats)
 
-# === 100% CRASH-PROOF SUBMIT ===
+# === FIXED: IMAGE UPLOAD NOW WORKS ===
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -224,8 +253,10 @@ def submit_request():
             category = (request.form.get('category') or request.form.get('service') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or request.form.get('details') or 'No description').strip()
+            # IMAGE - NOW SAVED!
+            image_path = save_uploaded_image(request.files.get('image') or request.files.get('evidence') or request.files.get('photo'))
+            
             db=get_db(); cur=get_cursor(db)
-            # anti-duplicate check
             if IS_POSTGRES:
                 cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
             else:
@@ -235,10 +266,10 @@ def submit_request():
                 if IS_POSTGRES: cur.close(); db.close()
                 return redirect(url_for('citizen_dashboard'))
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                        (session['user_id'], category, location, description, None))
+                        (session['user_id'], category, location, description, image_path))
             db.commit()
             if IS_POSTGRES: cur.close(); db.close()
-            flash("Request submitted successfully!", "success")
+            flash("Request submitted with image!" if image_path else "Request submitted!", "success")
             return redirect(url_for('citizen_dashboard'))
         except Exception as e:
             traceback.print_exc()
@@ -254,6 +285,9 @@ def new_request():
             category = (request.form.get('category') or 'General').strip()
             location = (request.form.get('location') or request.form.get('ward') or 'Kiharu').strip()
             description = (request.form.get('description') or '').strip() or 'No drugs at the hospital'
+            # IMAGE - NOW SAVED!
+            image_path = save_uploaded_image(request.files.get('image') or request.files.get('evidence') or request.files.get('photo'))
+            
             db = get_db(); cur=get_cursor(db)
             if IS_POSTGRES:
                 cur.execute(q("SELECT id FROM requests WHERE user_id=? AND category=? AND location=? AND description=? AND created_at > NOW() - INTERVAL '60 seconds'"), (session['user_id'], category, location, description))
@@ -264,10 +298,10 @@ def new_request():
                 if IS_POSTGRES: cur.close(); db.close()
                 return redirect(url_for('citizen_dashboard'))
             cur.execute(q("INSERT INTO requests (user_id, category, location, description, image_path) VALUES (?,?,?,?,?)"),
-                       (session['user_id'], category, location, description, None))
+                       (session['user_id'], category, location, description, image_path))
             db.commit()
             if IS_POSTGRES: cur.close(); db.close()
-            flash("Request submitted successfully!", "success")
+            flash("Request submitted with image!" if image_path else "Request submitted!", "success")
             return redirect(url_for('citizen_dashboard'))
         except Exception as e:
             traceback.print_exc()
@@ -300,7 +334,6 @@ def edit_citizen_request(req_id):
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('edit_request.html', req=req)
 
-# === NEW: Citizen can delete own duplicate ===
 @app.route('/citizen/request/<int:req_id>/delete', methods=['POST'])
 def delete_citizen_request(req_id):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -335,9 +368,9 @@ def cleanup_my_duplicates():
         for del_id in to_delete:
             cur.execute(q("DELETE FROM requests WHERE id=? AND user_id=?"), (del_id, session['user_id']))
         db.commit()
-        flash(f"Cleaned {len(to_delete)} duplicate(s) - kept {len(seen)} unique", "success")
+        flash(f"Cleaned {len(to_delete)} duplicate(s)", "success")
     else:
-        flash("No duplicates found - all unique", "info")
+        flash("No duplicates found", "info")
     if IS_POSTGRES:
         try: cur.close(); db.close()
         except: pass
@@ -404,7 +437,6 @@ def delete_user(user_id):
     flash(f"User #{user_id} deleted", "success")
     return redirect(url_for('admin_users'))
 
-# Error revealer for debugging (remove in production)
 @app.errorhandler(Exception)
 def handle_exception(e):
     tb = traceback.format_exc()
