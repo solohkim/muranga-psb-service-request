@@ -3,21 +3,44 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 <title>Register - Murang'a PSB</title>
 <style>
-body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.88) 0%, rgba(0,0,0,0.55) 55%), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000') center/cover fixed;font-family:'Segoe UI',system-ui}
-.left{color:#fff;padding:50px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+:root{--green:#0a5c26;--gold:#FFD54F}
+body{margin:0;min-height:100vh;font-family:'Segoe UI',system-ui;overflow-x:hidden;position:relative}
+.bg-slider{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2}
+.bg-slide{position:absolute;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.5s ease-in-out}
+.bg-slide.active{opacity:1}
+.bg-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:linear-gradient(90deg, rgba(0,30,10,0.92) 0%, rgba(0,0,0,0.65) 55%)}
+.left{color:#fff;padding:50px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
 .left h1{font-weight:900;font-size:2.8rem;line-height:.95}
-.gold{color:#FFD54F}
-.badge-m{border:1px solid #FFD54F;color:#FFD54F;padding:6px 14px;border-radius:100px;font-size:.70rem;letter-spacing:1.5px;background:rgba(255,213,79,.1)}
-.card-reg{background:#fff;border-radius:22px;box-shadow:0 25px 60px rgba(0,0,0,.45);position:relative;margin-top:35px}
-.avatar-box{width:96px;height:96px;border-radius:50%;margin:-48px auto 14px;background:#fff;border:4px solid #0a5c26;box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;font-size:2.5rem}
-.btn-green{background:#0a5c26;color:#fff;font-weight:700;padding:12px;border-radius:10px}
-.btn-green:hover{background:#083d1a;color:#FFD54F}
+.gold{color:var(--gold)}
+.badge-m{border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:100px;font-size:.70rem;letter-spacing:1.5px;background:rgba(255,213,79,.1)}
+.card-reg{background:rgba(255,255,255,0.97);border-radius:22px;box-shadow:0 25px 60px rgba(0,0,0,.45);position:relative;margin-top:35px;backdrop-filter:blur(8px)}
+.avatar-box{width:96px;height:96px;border-radius:50%;margin:-48px auto 14px;background:#fff;border:4px solid var(--green);box-shadow:0 8px 20px rgba(0,0,0,.25);display:grid;place-items:center;font-size:2.5rem}
+.btn-green{background:var(--green);color:#fff;font-weight:700;padding:12px;border-radius:10px;border:0;transition:.2s}
+.btn-green:hover{background:#083d1a;color:var(--gold);transform:translateY(-1px)}
 .feat{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px 14px;display:flex;gap:12px;margin-bottom:12px;backdrop-filter:blur(6px)}
-.feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:#FFD54F;display:grid;place-items:center}
+.feat i{width:36px;height:36px;border-radius:10px;background:rgba(255,213,79,.18);color:var(--gold);display:grid;place-items:center}
 .eye-btn{cursor:pointer}
 .is-invalid{border-color:#dc3545 !important}
+.location-badge{position:fixed;bottom:20px;left:20px;background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:20px;font-size:.8rem;backdrop-filter:blur(5px);z-index:10}
+.dots{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+@media(min-width:992px){.dots{left:25%}}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:.3s}
+.dot.active{background:var(--gold);width:24px;border-radius:5px}
 </style></head>
 <body>
+
+<div class="bg-slider">
+  <div class="bg-slide active" style="background-image:url('https://images.unsplash.com/photo-1591081658714-f576fb7eaed6?q=80&w=2000')"></div>
+  <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2000')"></div>
+  <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2000')"></div>
+  <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000')"></div>
+  <div class="bg-slide" style="background-image:url('https://images.unsplash.com/photo-1497366811353-2533774fa74e?q=80&w=2000')"></div>
+</div>
+<div class="bg-overlay"></div>
+
+<div class="location-badge" id="locationBadge"><i class="bi bi-geo-alt-fill"></i> <span id="locationText">Murang'a Tea Farms - Kangema</span></div>
+<div class="dots" id="dots"></div>
+
 <div class="container-fluid"><div class="row g-0">
 <div class="col-lg-6 left d-none d-lg-flex">
 <div>
@@ -33,7 +56,7 @@ body{margin:0;min-height:100vh;background:linear-gradient(90deg, rgba(0,30,10,0.
 <small class="mt-auto opacity-50">© {{ copyright_year }} Murang'a County PSB • Developed by {{ developer_name }}</small>
 </div>
 
-<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4">
+<div class="col-lg-6 col-12 d-flex align-items-center justify-content-center p-4" style="min-height:100vh">
 <div class="card-reg p-4 p-md-5 w-100" style="max-width:500px">
 <div class="avatar-box">📝</div>
 <div class="text-center mb-3"><h5 class="fw-bold mb-1">Create Account</h5><small class="text-muted">eCitizen verified registration</small></div>
@@ -92,8 +115,6 @@ function setupToggle(btnId, inputId, iconId){
 }
 setupToggle('togglePassword','password','eyeIcon1');
 setupToggle('toggleConfirm','confirm_password','eyeIcon2');
-
-// STRICT VALIDATION - No letters in phone/ID
 document.getElementById('full_name').addEventListener('input', function(){ this.value = this.value.replace(/[^A-Za-z ]/g,''); });
 document.getElementById('id_number').addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,8); });
 document.getElementById('phone').addEventListener('input', function(){ 
@@ -107,5 +128,15 @@ document.getElementById('regForm').addEventListener('submit', function(e){
   if(!/^\d{7,8}$/.test(id)){ alert('ID must be 7 or 8 digits only'); e.preventDefault(); return; }
   if(document.getElementById('password').value !== document.getElementById('confirm_password').value){ alert('Passwords do not match'); e.preventDefault(); return; }
 });
+
+// SLIDER
+const slides = document.querySelectorAll('.bg-slide');
+const locations = ["Murang'a Tea Farms - Kangema Hills","Community Market - Kiharu Town","Infrastructure Development - Maragua Road","Green Hills - Mathioya Valley","County Growth - Murang'a Town"];
+let current = 0; const badge = document.getElementById('locationText'); const dotsContainer = document.getElementById('dots');
+slides.forEach((_, i) => { const dot = document.createElement('div'); dot.className = 'dot' + (i===0 ? ' active' : ''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); });
+const dots = document.querySelectorAll('.dot');
+function goToSlide(n){ slides[current].classList.remove('active'); dots[current].classList.remove('active'); current = n % slides.length; slides[current].classList.add('active'); dots[current].classList.add('active'); badge.textContent = locations[current]; }
+setInterval(() => goToSlide((current+1)%slides.length), 5000);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>
