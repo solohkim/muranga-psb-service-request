@@ -100,7 +100,8 @@ try:
     init_db()
 except Exception as e:
     print(f"INIT DB outer catch: {e}")
-    @app.context_processor
+
+@app.context_processor
 def inject_copyright():
     return dict(developer_name=DEVELOPER_NAME, copyright_year=COPYRIGHT_YEAR)
 
@@ -108,11 +109,11 @@ def inject_copyright():
 def close_connection(exception):
     if not IS_POSTGRES:
         db = getattr(g, '_database', None)
-        if db is not None: db.close()
+        if db is not None:
+            db.close()
 
-def allowed_file(f): 
-    return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
-
+def allowed_file(f):
+    return '.' in f and f.rsplit('.', 1)[1].lower() in ALLOWED_EXT
 def save_uploaded_image(file):
     if not file or file.filename == '':
         return None
