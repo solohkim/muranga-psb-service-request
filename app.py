@@ -1,8 +1,9 @@
 import os
 import re
 import traceback
+import time
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
@@ -32,61 +33,86 @@ COPYRIGHT_YEAR = "2026"
 def favicon():
     return '', 204
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok", "time": datetime.now().isoformat()}), 200
+
 def get_db():
     if IS_POSTGRES:
-        return psycopg2.connect(DATABASE_URL, sslmode='require')
+        return psycopg2.connect(
+            DATABASE_URL, 
+            sslmode='require',
+            connect_timeout=10,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=5
+        )
     else:
         db = getattr(g, '_database', None)
         if db is None:
             db = g._database = sqlite3.connect(DATABASE)
             db.row_factory = sqlite3.Row
         return db
+
 def get_cursor(db):
     if IS_POSTGRES:
         return db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return db.cursor()
+
 def q(sql):
     return sql.replace("?", "%s") if IS_POSTGRES else sql
 
 def init_db():
-    try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        os.makedirs('static/uploads', exist_ok=True)
-        db = get_db()
-        cur = get_cursor(db)
-        if IS_POSTGRES:
-            cur.execute("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, full_name TEXT NOT NULL, id_number TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")
-            cur.execute("CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INTEGER, category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL, image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));")
-            db.commit()
-            cur.execute("SELECT * FROM users WHERE email=%s", ('admin@muranga.go.ke',))
-            if not cur.fetchone():
-                cur.execute("INSERT INTO users (full_name, email, password, role) VALUES (%s,%s,%s,%s)", ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            os.makedirs('static/uploads', exist_ok=True)
+            db = get_db()
+            cur = get_cursor(db)
+            if IS_POSTGRES:
+                cur.execute("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, full_name TEXT NOT NULL, id_number TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")
+                cur.execute("CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, user_id INTEGER, category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL, image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));")
                 db.commit()
-            cur.close(); db.close()
-        else:
-            with sqlite3.connect(DATABASE) as sdb:
-                sdb.executescript("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, id_number TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL, image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));")
-                cur2 = sdb.execute("SELECT * FROM users WHERE email='admin@muranga.go.ke'")
-                if not cur2.fetchone():
-                    sdb.execute("INSERT INTO users (full_name, email, password, role) VALUES (?,?,?,?)", ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
-                sdb.commit()
-    except Exception as e:
-        print(f"INIT DB SKIPPED: {e}"); traceback.print_exc()
+                cur.execute("SELECT * FROM users WHERE email=%s", ('admin@muranga.go.ke',))
+                if not cur.fetchone():
+                    cur.execute("INSERT INTO users (full_name, email, password, role) VALUES (%s,%s,%s,%s)", ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
+                    db.commit()
+                cur.close(); db.close()
+            else:
+                with sqlite3.connect(DATABASE) as sdb:
+                    sdb.executescript("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, id_number TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'citizen', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, category TEXT NOT NULL, location TEXT NOT NULL, description TEXT NOT NULL, image_path TEXT, status TEXT DEFAULT 'Pending', admin_remarks TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));")
+                    cur2 = sdb.execute("SELECT * FROM users WHERE email='admin@muranga.go.ke'")
+                    if not cur2.fetchone():
+                        sdb.execute("INSERT INTO users (full_name, email, password, role) VALUES (?,?,?,?)", ("Admin Muranga", "admin@muranga.go.ke", generate_password_hash("admin123"), "admin"))
+                    sdb.commit()
+            print(f"INIT DB SUCCESS on attempt {attempt+1}")
+            return
+        except Exception as e:
+            print(f"INIT DB attempt {attempt+1}/{max_retries} failed: {e}")
+            traceback.print_exc()
+            time.sleep(2)
+            if attempt == max_retries - 1:
+                print("INIT DB SKIPPED after retries")
+
 try:
     init_db()
-except:
-    pass
-
-@app.context_processor
+except Exception as e:
+    print(f"INIT DB outer catch: {e}")
+    @app.context_processor
 def inject_copyright():
     return dict(developer_name=DEVELOPER_NAME, copyright_year=COPYRIGHT_YEAR)
+
 @app.teardown_appcontext
 def close_connection(exception):
     if not IS_POSTGRES:
         db = getattr(g, '_database', None)
         if db is not None: db.close()
+
 def allowed_file(f): 
     return '.' in f and f.rsplit('.',1)[1].lower() in ALLOWED_EXT
+
 def save_uploaded_image(file):
     if not file or file.filename == '':
         return None
@@ -109,7 +135,7 @@ def save_uploaded_image(file):
 
 @app.before_request
 def check_session_timeout():
-    if request.endpoint in ('login', 'register', 'static', 'home', 'forgot_password', 'favicon', None): return
+    if request.endpoint in ('login', 'register', 'static', 'home', 'forgot_password', 'favicon', 'health', None): return
     if 'user_id' in session:
         session.permanent = True
         last_active = session.get('last_active')
@@ -123,14 +149,17 @@ def check_session_timeout():
                     return redirect(url_for('login'))
             except: pass
         session['last_active'] = now.isoformat()
+
 @app.after_request
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Cache-Control'] = 'no-store'
     return response
+
 @app.route('/')
 def home(): return redirect(url_for('login'))
+
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
@@ -162,19 +191,25 @@ def register():
             if IS_POSTGRES: cur.close(); db.close()
             return render_template('register.html')
     return render_template('register.html')
+
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        db = get_db(); cur = get_cursor(db)
-        cur.execute(q("SELECT * FROM users WHERE email=?"), (request.form['email'].strip().lower(),))
-        user = cur.fetchone()
-        if IS_POSTGRES: cur.close(); db.close()
-        if user and check_password_hash(user['password'], request.form['password']):
-            session['user_id']=user['id']; session['role']=user['role']; session['full_name']=user['full_name']
-            session.permanent=True; session['last_active']=datetime.now().isoformat()
-            return redirect(url_for('admin_dashboard' if user['role']=='admin' else 'citizen_dashboard'))
-        flash("Invalid credentials", "danger")
+        try:
+            db = get_db(); cur = get_cursor(db)
+            cur.execute(q("SELECT * FROM users WHERE email=?"), (request.form['email'].strip().lower(),))
+            user = cur.fetchone()
+            if IS_POSTGRES: cur.close(); db.close()
+            if user and check_password_hash(user['password'], request.form['password']):
+                session['user_id']=user['id']; session['role']=user['role']; session['full_name']=user['full_name']
+                session.permanent=True; session['last_active']=datetime.now().isoformat()
+                return redirect(url_for('admin_dashboard' if user['role']=='admin' else 'citizen_dashboard'))
+            flash("Invalid credentials", "danger")
+        except Exception as e:
+            print(f"LOGIN DB ERROR: {e}")
+            flash("Database waking up, please try again in 5 seconds...", "warning")
     return render_template('login.html')
+
 @app.route('/forgot-password', methods=['GET','POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -197,8 +232,10 @@ def forgot_password():
         flash("Password reset successful!", "success")
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
+
 @app.route('/logout')
 def logout(): session.clear(); return redirect(url_for('login'))
+
 @app.route('/dashboard')
 def citizen_dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -227,6 +264,7 @@ def citizen_dashboard():
     except:
         stats={'total':len(reqs),'pending':0,'inprogress':0,'resolved':0}
     return render_template('dashboard.html', requests=reqs, stats=stats, has_duplicates=has_duplicates, duplicate_count=duplicate_count, duplicate_ids=duplicate_ids)
+
 @app.route('/profile', methods=['GET','POST'])
 def profile():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -255,6 +293,7 @@ def profile():
         try: cur.close(); db.close()
         except: pass
     return render_template('profile.html', user=user)
+
 @app.route('/submit', methods=['GET','POST'])
 def submit_request():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -281,6 +320,7 @@ def submit_request():
         except Exception as e:
             traceback.print_exc(); flash(f"Submission error: {e}", "danger"); return redirect(url_for('citizen_dashboard'))
     return render_template('submit_request.html')
+
 @app.route('/new_request', methods=['GET','POST'])
 def new_request():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -308,6 +348,7 @@ def new_request():
             traceback.print_exc(); flash(f"Error submitting: {e}", "danger"); return redirect(url_for('citizen_dashboard'))
     try: return render_template('new_request.html')
     except: return render_template('submit_request.html')
+
 @app.route('/citizen/request/<int:req_id>/edit', methods=['GET','POST'])
 def edit_citizen_request(req_id):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -335,6 +376,7 @@ def edit_citizen_request(req_id):
         return redirect(url_for('citizen_dashboard'))
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('edit_request.html', req=req)
+
 @app.route('/citizen/request/<int:req_id>/delete', methods=['POST'])
 def delete_citizen_request(req_id):
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -349,6 +391,7 @@ def delete_citizen_request(req_id):
         try: cur.close(); db.close()
         except: pass
     return redirect(url_for('citizen_dashboard'))
+
 @app.route('/citizen/cleanup-duplicates', methods=['POST'])
 def cleanup_my_duplicates():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -370,6 +413,7 @@ def cleanup_my_duplicates():
         try: cur.close(); db.close()
         except: pass
     return redirect(url_for('citizen_dashboard'))
+
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role')!='admin': return redirect(url_for('login'))
@@ -387,6 +431,7 @@ def admin_dashboard():
     cur.execute("SELECT category, COUNT(*) as c FROM requests GROUP BY category"); by_category=cur.fetchall()
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('admin_dashboard.html', requests=all_reqs, total=total, pending=pending, inprog=inprog, resolved=resolved, by_category=by_category, current_filter=status_filter)
+
 @app.route('/admin/request/<int:request_id>')
 def admin_request_detail(request_id):
     if 'user_id' not in session or session.get('role') != 'admin':
@@ -398,6 +443,7 @@ def admin_request_detail(request_id):
     if not req:
         flash('Request not found', 'danger'); return redirect('/admin')
     return render_template('admin_request_detail.html', r=req, developer_name='soloh_kim', copyright_year=2026)
+
 @app.route('/admin/update/<int:req_id>', methods=['POST'])
 def update_request(req_id):
     if session.get('role')!='admin': return redirect(url_for('login'))
@@ -407,6 +453,7 @@ def update_request(req_id):
     if IS_POSTGRES: cur.close(); db.close()
     flash("Updated!", "success")
     return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/request/<int:req_id>/delete', methods=['POST'])
 def delete_request(req_id):
     if session.get('role') != 'admin': return redirect(url_for('login'))
@@ -416,6 +463,7 @@ def delete_request(req_id):
     if IS_POSTGRES: cur.close(); db.close()
     flash(f"Request #{req_id} deleted", "success")
     return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/users')
 def admin_users():
     if session.get('role') != 'admin': return redirect(url_for('login'))
@@ -426,6 +474,7 @@ def admin_users():
     total_users_row = cur.fetchone(); total_users = total_users_row['count'] if IS_POSTGRES else total_users_row[0]
     if IS_POSTGRES: cur.close(); db.close()
     return render_template('admin_users.html', users=users, total_users=total_users)
+
 @app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
 def delete_user(user_id):
     if session.get('role') != 'admin': return redirect(url_for('login'))
@@ -436,13 +485,16 @@ def delete_user(user_id):
     if IS_POSTGRES: cur.close(); db.close()
     flash(f"User #{user_id} deleted", "success")
     return redirect(url_for('admin_users'))
+
 @app.errorhandler(HTTPException)
 def handle_http_exception(e):
     return e
+
 @app.errorhandler(Exception)
 def handle_exception(e):
     tb = traceback.format_exc()
     print("=== UNHANDLED EXCEPTION ==="); print(tb)
     return f"<html><body style='padding:20px;font-family:monospace'><h2 style='color:red'>REAL ERROR:</h2><p>{e}</p><pre style='background:#000;color:#0f0;padding:15px;white-space:pre-wrap'>{tb}</pre><a href='/dashboard'>Back</a></body></html>", 500
+
 if __name__=='__main__':
     app.run(debug=True)
